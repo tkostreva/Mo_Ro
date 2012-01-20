@@ -4,16 +4,16 @@ LIB_LINK=-lhighgui -lcv -lcxcore -lm
 
 all: robot
 
-robot: robot_assign1.o northstar.o wheel_encoder.o filter.o position.o
-	gcc ${CFLAGS} -o robot robot_assign1.o northstar.o wheel_encoder.o filter.o position.o ${LIB_FLAGS} ${LIB_LINK}
+robot: robot_assign1.o position.o northstar.o wheel_encoder.o filter.o 
+	gcc ${CFLAGS} -o robot robot_assign1.o position.o northstar.o wheel_encoder.o filter.o ${LIB_FLAGS} ${LIB_LINK}
 
-robot_assign1.o: robot_assign1.c
+robot_assign1.o: robot_assign1.c position.o
 	gcc ${CFLAGS} -c robot_assign1.c
 
-position.o: position.c northstar.o wheel_encoder.o
+position.o: position.c northstar.o wheel_encoder.o filter.o
 	gcc ${CFLAGS} -c position.c
 
-northstar.o: northstar.c filter.o
+northstar.o: northstar.c
 	gcc ${CFLAGS} -c northstar.c
 
 wheel_encoder.o: wheel_encoder.c
@@ -21,8 +21,6 @@ wheel_encoder.o: wheel_encoder.c
 
 filter.o: filter.c
 	gcc ${CFLAGS} -c filter.c
-
-
 
 clean:
 	rm -rf *.o
