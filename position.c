@@ -9,9 +9,15 @@
 
 #include "position.h"
 
-#define NUM_FILTERS 2
+// We are storing all raw data, as well as filtering it
+#define NUM_FILTERS 7
 /* f[0]  NorthStar X filter
- * f[1]  NorthStar Y filter 
+ * f[1]  NorthStar Y filter
+ * f[2]  NorthStar Theta filter
+ * f[3]  Left WE filter
+ * f[4]  Right WE filter
+ * f[5]  Back WE filter
+ * f[6]  NorthStar Raw Signal Filter
  */
 
 /* GLOBALS TO POSITION.C */
@@ -35,6 +41,12 @@ void filter_flush(robot_if_t *ri) {
 	for(i = 0; i < DEEP_TAPS - 1; i++) {
 		fir_Filter(f[0], (float)ri_getX(ri), DEEP_FILTER);
 		fir_Filter(f[1], (float)ri_getY(ri), DEEP_FILTER);
+		fir_Filter(f[2], ri_getTheta(ri), DEEP_FILTER);
+		fir_Filter(f[3], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_LEFT ), DEEP_FILTER);
+		fir_Filter(f[4], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_RIGHT ), DEEP_FILTER);
+		fir_Filter(f[5], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_REAR ), DEEP_FILTER);
+		fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
+	
 		update_sensor_data(ri);
 	}
 }
@@ -65,8 +77,10 @@ robot_stance *create_stance(){
 	robot_stance *local = (robot_stance *) calloc(1, sizeof(robot_stance));
 	
 	local->ns = (ns_stance *) calloc(1, sizeof(ns_stance));
+	local->ns_f = (ns_stance *) calloc(1, sizeof(ns_stance));
 	
 	local->we = (we_stance *) calloc(1, sizeof(we_stance));
+	local->we_f = (we_stance *) calloc(1, sizeof(we_stance));	
 	
 	return local;
 }
@@ -76,7 +90,16 @@ void get_stance(robot_stance *s, robot_if_t *ri) {
 	get_ns(s->ns, ri);
 	get_we(s->we, ri);
 	
-	// filtering and Transforms occur here??
+	// filter data
+	s->ns_f->x	= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
+	s->ns_f->y	= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
+	s->ns_f->theta	= fir_Filter(f[2], s->ns->theta, DEEP_FILTER);
+	s->ns_f->sig	= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
+	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, DEEP_FILTER);
+	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, DEEP_FILTER);
+	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, DEEP_FILTER);
+	
+	// Transforms occur here??
 	// s->x = something;
 	// s->y = something;
 	// s->theta = something;
@@ -84,7 +107,9 @@ void get_stance(robot_stance *s, robot_if_t *ri) {
 
 void free_stance(robot_stance *s){
 	free(s->we);
+	free(s->we_f);
 	free(s->ns);
+	free(s->ns_f);
 	free(s);
 }
 
@@ -153,13 +178,15 @@ void print_stance_csv(){
 	
 	// print out header for CSV file on first pass
 	if ( init == 0 ) {
-		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, NS_X, NS_Y, NS_T, Sig, Room\n");
+		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T, Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F\n");
 		init = 1;
 	}
 	
 	print_we_csv(current->we);
+	printf(", %d, %d, %d, ", current->we_f->left_tot, current->we_f->right_tot, current->we_f->back_tot);
 	print_ns_csv(current->ns);
-	printf("\n");
+	printf(", %d, %d, %f, %d\n", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
+	
 	//printf("%d, %d, %f\n", current->x, current->y, current->theta);
 }
 

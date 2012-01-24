@@ -15,7 +15,9 @@
 
 typedef struct _robot_stance_ {
 	ns_stance *ns; 
+	ns_stance *ns_f;
 	we_stance *we;
+	we_stance *we_f;
 	int x;
 	int y;
 	float theta;	

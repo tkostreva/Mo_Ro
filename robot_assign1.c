@@ -90,7 +90,7 @@ int main(int argv, char **argc) {
 	
 	dist_y = 0.0;
 		
-	//print_ns(&initial);
+	print_stance_csv();
 	
         // Action loop
         do {
@@ -118,7 +118,7 @@ int main(int argv, char **argc) {
 						
 		dist_y = get_Distance(&ri);
 		print_stance_csv();
-		printf("Distance from start = %fcm\n", dist_y);
+		//printf("Distance from start = %fcm\n", dist_y);
         } while(dist_y < target_dist);
 #endif
 	
