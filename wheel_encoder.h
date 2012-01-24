@@ -25,4 +25,6 @@ float get_we_dist_LR(we_stance *s);
 
 void print_we(we_stance *s);
 
+void print_we_csv(we_stance *s);
+
 #endif

@@ -153,11 +153,14 @@ void print_stance_csv(){
 	
 	// print out header for CSV file on first pass
 	if ( init == 0 ) {
-		printf("x, y, Theta\n");
+		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, NS_X, NS_Y, NS_T, Sig, Room\n");
 		init = 1;
 	}
 	
-	printf("%d, %d, %f\n", current->x, current->y, current->theta);
+	print_we_csv(current->we);
+	print_ns_csv(current->ns);
+	printf("\n");
+	//printf("%d, %d, %f\n", current->x, current->y, current->theta);
 }
 
 //returns distance since last reset in cm

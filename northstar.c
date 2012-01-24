@@ -60,15 +60,7 @@ void print_ns(ns_stance *s) {
 
 // Print routine for data dump to CSV file
 void print_ns_csv(ns_stance *s){
-	static char init = 0;
-	
-	// print out header for CSV file on first pass
-	if ( init == 0 ) {
-		printf("x, y, Theta, RawSig, Room\n");
-		init = 1;
-	}
-	
-	printf("%d, %d, %f, %d, %d\n", s->x, s->y, s->theta, s->sig, s->room);
+	printf("%d, %d, %f, %d, %d", s->x, s->y, s->theta, s->sig, s->room);
 }
 
 int ns_ticksToCM(int ticks){
