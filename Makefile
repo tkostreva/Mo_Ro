@@ -22,6 +22,9 @@ wheel_encoder.o: wheel_encoder.c
 filter.o: filter.c
 	gcc ${CFLAGS} -c filter.c
 
+matvec.o: matvec.c
+	gcc ${CFLAGS} -c matvec.c
+
 clean:
 	rm -rf *.o
 	rm -rf *~
