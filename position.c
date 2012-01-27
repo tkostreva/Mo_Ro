@@ -11,6 +11,7 @@
 
 // We are storing all raw data, as well as filtering it
 #define NUM_FILTERS 7
+#define NS_TICKS_PER_CM 45
 /* f[0]  NorthStar X filter
  * f[1]  NorthStar Y filter
  * f[2]  NorthStar Theta filter
@@ -84,7 +85,58 @@ robot_stance *create_stance(){
 	
 	return local;
 }
-
+void transformNS(robot_stance* current_stance, robot_stance* initial_stance){//in progress
+	
+	//use clockwise rotation matrix //(i think since initial theta represents ccw)
+	//shift + --> rotate * --> scale *
+	
+	//initialize shift_vector
+	vector shift_vector = calloc(1, sizeof(vector));
+	shift_vector->v[0] = (-1)*(initial->ns_f->x);
+	shift_vector->v[1] = (-1)*(initial->ns_f->y);
+	shift_vector->v[2] = (-1)*(initial->ns_f->theta);
+	
+	//initialize clockwise_matrix
+	matrix clockwise_matrix = calloc(1, sizeof(matrix));
+	clockwise_matrix->v[0][0] = (float)cos((double)(initial->ns_f->theta));
+	clockwise_matrix->v[0][1] = (float)sin((double)(initial->ns_f->theta));
+	clockwise_matrix->v[0][2] = 0;
+	
+	clockwise_matrix->v[1][0] = (float)((-1)*sin((double)(initial->ns_f->theta)));
+	clockwise_matrix->v[1][1] = (float)cos((double)(initial->ns_f->theta));
+	clockwise_matrix->v[1][2] = 0;
+	
+	clockwise_matrix->v[2][0] = 0;
+	clockwise_matrix->v[2][1] = 0;
+	clockwise_matrix->v[2][2] = 1;
+	
+	//initialize scale_matrix
+	matrix scale_matrix = calloc(1, sizeof(matrix));
+	scale_matrix->v[0][0] = (float)(1/NS_TICKS_PER_CM);
+	scale_matrix->v[0][1] = 0;
+	scale_matrix->v[0][2] = 0;
+	
+	scale_matrix->v[1][0] = 0;
+	scale_matrix->v[1][1] = (float)(1/NS_TICKS_PER_CM);
+	scale_matrix->v[1][2] = 0;
+	
+	scale_matrix->v[2][0] = 0;
+	scale_matrix->v[2][1] = 0;
+	scale_matrix->v[2][2] = 1;//convert to degrees? do it here if needed
+	
+	//initialize currentns_vector
+	vector currentns_vector = calloc(1, sizeof(vector));
+	currentns_vector->v[0] = (current->ns_f->x);
+	currentns_vector->v[1] = (current->ns_f->y);
+	currentns_vector->v[2] = (current->ns_f->theta);
+	
+	//initialize working_vector //temp storage
+	vector working_vector = calloc(1, sizeof(vector));
+	
+	//do some math and store the results in currentstance x y and theta
+	//shift + --> rotate * --> scale *
+	
+}
 void get_stance(robot_stance *s, robot_if_t *ri) {
 	// populate stance with northstar and wheel encoder data
 	get_ns(s->ns, ri);
