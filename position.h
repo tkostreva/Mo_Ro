@@ -12,6 +12,7 @@
 #include "northstar.h"
 #include "wheel_encoder.h"
 #include "filter.h"
+#include "matvec.h"
 
 typedef struct _robot_stance_ {
 	ns_stance *ns;//raw
