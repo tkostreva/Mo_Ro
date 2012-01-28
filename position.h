@@ -14,13 +14,13 @@
 #include "filter.h"
 
 typedef struct _robot_stance_ {
-	ns_stance *ns; 
-	ns_stance *ns_f;
-	we_stance *we;
-	we_stance *we_f;
-	int x;
-	int y;
-	float theta;	
+	ns_stance *ns;//raw
+	ns_stance *ns_f;//raw
+	we_stance *we;//raw
+	we_stance *we_f;//raw
+	int x, nsX, weX;//translated 
+	int y, nsY, weY;//translated
+	float theta;//translated
 } robot_stance;
 
 // I think we need to define this based on matlab results... of the Filter Talked about on Wednesday 1/18
