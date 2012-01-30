@@ -13,11 +13,14 @@ void get_we(we_stance *s, robot_if_t *ri ) {
 // Currently Reports FRONT/BACK distance from TOTALS
 float get_we_dist_FB(we_stance *s) {
 	float avg;
+	//print_we(s);
 	avg = s->right_tot * sin(120.0 / 180.0 * M_PI);
 	avg += s->left_tot * sin(60.0 / 180.0 * M_PI);
 	avg /= 2.0;
+	avg /= WE_TICKS_TO_CM;
+	//printf("Avg = %f\n", avg);
 	
-	return avg / WE_TICKS_TO_CM;
+	return avg;
 	
 }
 

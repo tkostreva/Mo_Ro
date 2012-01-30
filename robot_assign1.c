@@ -21,7 +21,9 @@ int main(int argv, char **argc) {
 	robot_if_t ri;
 	ns_stance initial, current, last;
 	we_stance we_current, we_sum;
-	float dist_y, dist_x, target_dist;
+	float dist_y;
+	float dist_x;
+	float target_dist;
 	
         // Make sure we have a valid command line argument
         if(argv <= 1) {
@@ -90,7 +92,7 @@ int main(int argv, char **argc) {
 	
 	dist_y = 0.0;
 		
-	print_stance_csv();
+	//print_stance_csv();
 	
         // Action loop
         do {
@@ -116,9 +118,9 @@ int main(int argv, char **argc) {
 		}
 		
 						
-		dist_y = get_Distance(&ri);
+		get_Distance(&ri, &dist_y);
 		print_stance_csv();
-		//printf("Distance from start = %fcm\n", dist_y);
+		printf("Distance from start = %fcm\n", dist_y);
         } while(dist_y < target_dist);
 #endif
 	

@@ -67,7 +67,7 @@ float delta_theta() {
 		else sign = 1;
 		
 		// correct change in theta by 2 * PI
-		d_theta = sign * ( d_theta - ( 2.0 * M_PI ));
+		d_theta = sign * ( d_theta - ( 2.0 * M_PI )); 
 	}
 	
 	return d_theta;	
@@ -191,13 +191,13 @@ void print_stance_csv(){
 }
 
 //returns distance since last reset in cm
-float get_Distance(robot_if_t *ri){
+void get_Distance(robot_if_t *ri, float *dist){
 	get_stance(previous, ri);
 	
 	update_sensor_data(ri);
 	get_stance(current, ri);
 	
-	return get_we_dist_FB(current->we);
+	*dist = get_we_dist_FB(current->we);
 }
 
 void exit_pos(){

@@ -33,7 +33,7 @@ int getX(robot_if_t *ri);		//returns right/left position relative to origin in c
 int getY(robot_if_t *ri);		//returns forward/reverse position relative to origin in cm
 int getTheta(robot_if_t *ri);		//returns from 0 to 360
 void resetCoordinates(robot_if_t *ri);	//sets origin to current position 
-float getDistance(robot_if_t *ri);	//returns distance since last reset in cm
+void getDistance(robot_if_t *ri, float* dist);	//returns distance since last reset in cm
 void print_stance_csv();
 void exit_pos();			//clean up memory
 
