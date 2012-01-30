@@ -12,7 +12,6 @@
 #include "northstar.h"
 #include "wheel_encoder.h"
 #include "filter.h"
-<<<<<<< HEAD
 #include "transform.h"
 #include "matvec.h"
 
@@ -29,18 +28,6 @@ typedef struct _robot_stance_ {
 	we_stance *we_f;	// Filtered Wheel Encoder Data
 	posVec nsXfmd;		// North Star Transformed position
 	posVec weXfmd;		// Wheel Encoder Transformed position
-=======
-#include "matvec.h"
-
-typedef struct _robot_stance_ {
-	ns_stance *ns;//raw
-	ns_stance *ns_f;//raw
-	we_stance *we;//raw
-	we_stance *we_f;//raw
-	int x, nsX, weX;//translated 
-	int y, nsY, weY;//translated
-	float theta;//translated
->>>>>>> 40137aace2ab5546467f420e97586f6c9ee3a707
 } robot_stance;
 
 // I think we need to define this based on matlab results... of the Filter Talked about on Wednesday 1/18
