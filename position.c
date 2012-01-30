@@ -24,7 +24,6 @@
 /* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
 robot_stance *initial, *current, *previous;
-vector *nsTranslatedVector, weTranslatedVector;
 
 // Update the robot's sensor information
 void update_sensor_data( robot_if_t *ri ) {
@@ -148,6 +147,8 @@ void transformNS(){//in progress
 	static matrix *clockwise_matrix;
 	static matrix *scale_matrix;
 	
+	free(current->nsTranslated);
+	
 	vector *currentns_vector = calloc(1, sizeof(vector));
 	vector *working_vector = calloc(1, sizeof(vector));
 	vector *working_vector_2 = calloc(1, sizeof(vector));
@@ -203,8 +204,9 @@ void transformNS(){//in progress
 	//shift + --> rotate * --> scale *
 	AddVectors(currentns_vector, shift_vector, working_vector);//shift
 	MultMatVec(clockwise_matrix, working_vector, working_vector_2);//rotate
-	MultMatVec(scale_matrix, working_vector_2, nsTranslatedVector);//scale
+	MultMatVec(scale_matrix, working_vector_2, current->nsTranslated);//scale
 	
+	// free all working vectors
 	free(currentns_vector);
 	free(working_vector);
 	free(working_vector_2);	
@@ -233,6 +235,8 @@ void get_Distance(robot_if_t *ri, float *dist){
 	
 	update_sensor_data(ri);
 	get_stance(current, ri);
+	
+	transformNS();
 	
 	*dist = get_we_dist_FB(current->we);
 }
