@@ -23,7 +23,7 @@
 
 /* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
-robot_stance *initial, *current, *previous;
+robot_stance *current, *previous;
 
 // Update the robot's sensor information
 void update_sensor_data( robot_if_t *ri ) {
@@ -85,6 +85,54 @@ robot_stance *create_stance(){
 	
 	return local;
 }
+
+void get_stance(robot_stance *s, robot_if_t *ri) {
+	// populate stance with northstar and wheel encoder data
+	get_ns(s->ns, ri);
+	get_we(s->we, ri);
+	
+	// filter data
+	s->ns_f->x	= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
+	s->ns_f->y	= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
+	s->ns_f->theta	= fir_Filter(f[2], s->ns->theta, DEEP_FILTER);
+	s->ns_f->sig	= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
+	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, DEEP_FILTER);
+	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, DEEP_FILTER);
+	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, DEEP_FILTER);
+	
+	// Transforms occur here??
+	// s->x = something;
+	// s->y = something;
+	// s->theta = something;
+}
+
+void free_stance(robot_stance *s){
+	free(s->we);
+	free(s->we_f);
+	free(s->ns);
+	free(s->ns_f);
+	free(s);
+}
+
+void init_pos(robot_if_t *ri){
+	int i;
+	
+	// Get initial Northstar position and reset wheel encoder totals
+	update_sensor_data(ri);
+	ri_reset_state(ri);
+	
+	// Initialize and flush filters
+	for(i = 0; i < NUM_FILTERS; i++) f[i] = fir_Filter_Create();
+	filter_flush(ri);
+	
+	// Initialize all Robot Stances to current position
+	current = create_stance();
+	get_stance(current, ri);
+	
+	previous = create_stance();
+	get_stance(previous, ri);	
+}
+
 void transformNS(robot_stance* current_stance, robot_stance* initial_stance){//in progress
 	
 	//use clockwise rotation matrix //(i think since initial theta represents ccw)
@@ -136,55 +184,6 @@ void transformNS(robot_stance* current_stance, robot_stance* initial_stance){//i
 	//do some math and store the results in currentstance x y and theta
 	//shift + --> rotate * --> scale *
 	
-}
-void get_stance(robot_stance *s, robot_if_t *ri) {
-	// populate stance with northstar and wheel encoder data
-	get_ns(s->ns, ri);
-	get_we(s->we, ri);
-	
-	// filter data
-	s->ns_f->x	= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
-	s->ns_f->y	= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
-	s->ns_f->theta	= fir_Filter(f[2], s->ns->theta, DEEP_FILTER);
-	s->ns_f->sig	= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
-	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, DEEP_FILTER);
-	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, DEEP_FILTER);
-	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, DEEP_FILTER);
-	
-	// Transforms occur here??
-	// s->x = something;
-	// s->y = something;
-	// s->theta = something;
-}
-
-void free_stance(robot_stance *s){
-	free(s->we);
-	free(s->we_f);
-	free(s->ns);
-	free(s->ns_f);
-	free(s);
-}
-
-void init_pos(robot_if_t *ri){
-	int i;
-	
-	// Get initial Northstar position and reset wheel encoder totals
-	update_sensor_data(ri);
-	ri_reset_state(ri);
-	
-	// Initialize and flush filters
-	for(i = 0; i < NUM_FILTERS; i++) f[i] = fir_Filter_Create();
-	filter_flush(ri);
-	
-	// Initialize all NorthStar Stances to current position
-	initial = create_stance();
-	get_stance(initial, ri);
-	
-	current = create_stance();
-	get_stance(current, ri);
-	
-	previous = create_stance();
-	get_stance(previous, ri);	
 }
 
 int getX(robot_if_t *ri){
