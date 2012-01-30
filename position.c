@@ -23,8 +23,9 @@
 
 /* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
-robot_stance *current, *previous;
+robot_stance *initial, *current, *previous;
 vector *nsTranslatedVector, weTranslatedVector;
+
 // Update the robot's sensor information
 void update_sensor_data( robot_if_t *ri ) {
 	// If first sensor update fails to respond, try one more time before giving up
@@ -126,6 +127,9 @@ void init_pos(robot_if_t *ri){
 	filter_flush(ri);
 	
 	// Initialize all Robot Stances to current position
+	initial = create_stance();
+	get_stance(initial, ri);
+	
 	current = create_stance();
 	get_stance(current, ri);
 	
@@ -133,102 +137,77 @@ void init_pos(robot_if_t *ri){
 	get_stance(previous, ri);	
 }
 
-void transformNS(robot_stance* current_stance, robot_stance* initial_stance){//in progress
+void transformNS(){//in progress
 	
 	//use clockwise rotation matrix //(i think since initial theta represents ccw)
 	//shift + --> rotate * --> scale *
 	
 	//initialize shift_vector
-	static vector shift_vector = calloc(1, sizeof(vector));
-	shift_vector->v[0] = (-1)*(initial->ns_f->x);
-	shift_vector->v[1] = (-1)*(initial->ns_f->y);
-	shift_vector->v[2] = (-1)*(initial->ns_f->theta);
+	static int initialized = 0;
+	static vector *shift_vector;
+	static matrix *clockwise_matrix;
+	static matrix *scale_matrix;
 	
-	//initialize clockwise_matrix
-	static matrix clockwise_matrix = calloc(1, sizeof(matrix));
-	clockwise_matrix->v[0][0] = (float)cos((double)(initial->ns_f->theta));
-	clockwise_matrix->v[0][1] = (float)sin((double)(initial->ns_f->theta));
-	clockwise_matrix->v[0][2] = 0;
+	vector *currentns_vector = calloc(1, sizeof(vector));
+	vector *working_vector = calloc(1, sizeof(vector));
+	vector *working_vector_2 = calloc(1, sizeof(vector));
 	
-	clockwise_matrix->v[1][0] = (float)((-1)*sin((double)(initial->ns_f->theta)));
-	clockwise_matrix->v[1][1] = (float)cos((double)(initial->ns_f->theta));
-	clockwise_matrix->v[1][2] = 0;
-	
-	clockwise_matrix->v[2][0] = 0;
-	clockwise_matrix->v[2][1] = 0;
-	clockwise_matrix->v[2][2] = 1;
-	
-	//initialize scale_matrix
-	static matrix scale_matrix = calloc(1, sizeof(matrix));
-	scale_matrix->v[0][0] = (float)(1/NS_TICKS_PER_CM);
-	scale_matrix->v[0][1] = 0;
-	scale_matrix->v[0][2] = 0;
-	
-	scale_matrix->v[1][0] = 0;
-	scale_matrix->v[1][1] = (float)(1/NS_TICKS_PER_CM);
-	scale_matrix->v[1][2] = 0;
-	
-	scale_matrix->v[2][0] = 0;
-	scale_matrix->v[2][1] = 0;
-	scale_matrix->v[2][2] = 1;//convert to degrees? do it here if needed
+	if(!initialized) {
+		shift_vector = calloc(1, sizeof(vector));
+		clockwise_matrix = calloc(1, sizeof(matrix));
+		scale_matrix = calloc(1, sizeof(matrix));
+	  
+		shift_vector->v[0] = (-1)*(initial->ns_f->x);
+		shift_vector->v[1] = (-1)*(initial->ns_f->y);
+		shift_vector->v[2] = (-1)*(initial->ns_f->theta);
+		
+		//initialize clockwise_matrix
+		
+		clockwise_matrix->v[0][0] = (float)cos((double)(initial->ns_f->theta));
+		clockwise_matrix->v[0][1] = (float)sin((double)(initial->ns_f->theta));
+		clockwise_matrix->v[0][2] = 0;
+		
+		clockwise_matrix->v[1][0] = (float)((-1)*sin((double)(initial->ns_f->theta)));
+		clockwise_matrix->v[1][1] = (float)cos((double)(initial->ns_f->theta));
+		clockwise_matrix->v[1][2] = 0;
+		
+		clockwise_matrix->v[2][0] = 0;
+		clockwise_matrix->v[2][1] = 0;
+		clockwise_matrix->v[2][2] = 1;
+		
+		//initialize scale_matrix
+		scale_matrix->v[0][0] = (float)(1/NS_TICKS_PER_CM);
+		scale_matrix->v[0][1] = 0;
+		scale_matrix->v[0][2] = 0;
+		
+		scale_matrix->v[1][0] = 0;
+		scale_matrix->v[1][1] = (float)(1/NS_TICKS_PER_CM);
+		scale_matrix->v[1][2] = 0;
+		
+		scale_matrix->v[2][0] = 0;
+		scale_matrix->v[2][1] = 0;
+		scale_matrix->v[2][2] = 1;	//convert to degrees? do it here if needed
+		
+		initialized = 1;
+	}
 	
 	//initialize currentns_vector
-	vector currentns_vector = calloc(1, sizeof(vector));
+	
 	currentns_vector->v[0] = (current->ns_f->x);
 	currentns_vector->v[1] = (current->ns_f->y);
 	currentns_vector->v[2] = (current->ns_f->theta);
 	
 	//initialize working_vector //temp storage
-	vector working_vector = calloc(1, sizeof(vector));
-	vector working_vector_2 = calloc(1, sizeof(vector));
+	
 	//do some math and store the results in currentstance x y and theta
 	//shift + --> rotate * --> scale *
-	AddVectors(&currentns_vector, &shift_vector, &working_vector);//shift
-	MultMatVec(&clockwise_matrix, &working_vector, &working_vector_2);//rotate
-	MultMatVec(&scale_matrix, &working_vector_2, &nsTranslatedVector);//scale
+	AddVectors(currentns_vector, shift_vector, working_vector);//shift
+	MultMatVec(clockwise_matrix, working_vector, working_vector_2);//rotate
+	MultMatVec(scale_matrix, working_vector_2, nsTranslatedVector);//scale
 	
-	free(&working_vector);
-	free(&working_vector2);
-	
-	
-}
-
-int getX(robot_if_t *ri){
-  
-  /*
-   * Should we do Northstar weighted average with wheel encoder based on signal strength?
-   */
-  if(ri_getNavStrength(ri)>NORTHSTAR_UNRELIABLE_STRENGTH){
-    //use northstar
-  }
-  else{
-    //use encoders
-  }
-  return 0;
-}
-
-int getY(robot_if_t *ri){
-  if(ri_getNavStrength(ri)>NORTHSTAR_UNRELIABLE_STRENGTH){
-    //use northstar
-  }
-  else{
-    //use encoders
-  }
-  return 0;
-}
-
-int getTheta(robot_if_t *ri){
-  if(ri_getNavStrength(ri)>NORTHSTAR_UNRELIABLE_STRENGTH){
-    //use northstar
-  }
-  else{
-    //use encoders
-  }
-  return 0;
-}
-void resetCoordinates(robot_if_t *ri){
-  
-  return;
+	free(currentns_vector);
+	free(working_vector);
+	free(working_vector_2);	
 }
 
 void print_stance_csv(){
