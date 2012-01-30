@@ -148,6 +148,7 @@ void transformNS(){//in progress
 	static matrix *scale_matrix;
 	
 	free(current->nsTranslated);
+	current->nsTranslated = calloc(1, sizeof(vector));
 	
 	vector *currentns_vector = calloc(1, sizeof(vector));
 	vector *working_vector = calloc(1, sizeof(vector));
@@ -217,16 +218,16 @@ void print_stance_csv(){
 	
 	// print out header for CSV file on first pass
 	if ( init == 0 ) {
-		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T, Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F\n");
+		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T, Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F, NS_xfm_X, NS_xfm_Y\n");
 		init = 1;
 	}
 	
 	print_we_csv(current->we);
 	printf(", %d, %d, %d, ", current->we_f->left_tot, current->we_f->right_tot, current->we_f->back_tot);
 	print_ns_csv(current->ns);
-	printf(", %d, %d, %f, %d\n", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
+	printf(", %d, %d, %f, %d", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
 	
-	//printf("%d, %d, %f\n", current->x, current->y, current->theta);
+	printf("%d, %d\n", current->nsTranslated->v[0], current->nsTranslated->v[1]);
 }
 
 //returns distance since last reset in cm
