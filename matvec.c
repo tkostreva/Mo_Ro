@@ -34,10 +34,10 @@ void CrossVectors ( vector* a, vector* b, vector* result)
 void MultMatVec ( matrix* m, vector *v, vector* result)
 {
 	int i, j;//cursors
-	for(i=0; i<3; i++){
+	for(i=0; i<3; i++){//row
 		result->v[i]=0;
-		for(j=0; j<3; j++){
-			result->v[i] += m->v[i][j]*v->v[j];
+		for(j=0; j<3; j++){//col
+			result->v[i] += ((m->v[i][j])*(v->v[j]));
 		
 		}
 	}
