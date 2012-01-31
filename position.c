@@ -11,7 +11,7 @@
 
 // We are storing all raw data, as well as filtering it
 #define NUM_FILTERS 7
-#define NS_TICKS_PER_CM 45
+#define NS_TICKS_PER_CM 45.0
 /* f[0]  NorthStar X filter
  * f[1]  NorthStar Y filter
  * f[2]  NorthStar Theta filter
@@ -24,6 +24,9 @@
 /* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
 robot_stance *initial, *current, *previous;
+vector *shift_vector;
+matrix *clockwise_matrix;
+matrix *scale_matrix;
 
 // Update the robot's sensor information
 void update_sensor_data( robot_if_t *ri ) {
@@ -142,17 +145,14 @@ void transformNS(){//in progress
 	//shift + --> rotate * --> scale *
 	
 	//initialize shift_vector
-	static int initialized = 0;
-	static vector *shift_vector;
-	static matrix *clockwise_matrix;
-	static matrix *scale_matrix;
-	
-	free(current->nsTranslated);
-	current->nsTranslated = calloc(1, sizeof(vector));
-	
+	static char initialized = 0;
+		
 	vector *currentns_vector = calloc(1, sizeof(vector));
 	vector *working_vector = calloc(1, sizeof(vector));
 	vector *working_vector_2 = calloc(1, sizeof(vector));
+	
+	free(current->nsTranslated);
+	current->nsTranslated = calloc(1, sizeof(vector));
 	
 	if(!initialized) {
 		shift_vector = calloc(1, sizeof(vector));
@@ -178,17 +178,17 @@ void transformNS(){//in progress
 		clockwise_matrix->v[2][2] = 1;
 		
 		//initialize scale_matrix
-		scale_matrix->v[0][0] = (float)(1/NS_TICKS_PER_CM);
-		scale_matrix->v[0][1] = 0;
-		scale_matrix->v[0][2] = 0;
+		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
+		scale_matrix->v[0][1] = 0.0;
+		scale_matrix->v[0][2] = 0.0;
 		
-		scale_matrix->v[1][0] = 0;
-		scale_matrix->v[1][1] = (float)(1/NS_TICKS_PER_CM);
-		scale_matrix->v[1][2] = 0;
+		scale_matrix->v[1][0] = 0.0;
+		scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
+		scale_matrix->v[1][2] = 0.0;
 		
-		scale_matrix->v[2][0] = 0;
-		scale_matrix->v[2][1] = 0;
-		scale_matrix->v[2][2] = 1;	//convert to degrees? do it here if needed
+		scale_matrix->v[2][0] = 0.0;
+		scale_matrix->v[2][1] = 0.0;
+		scale_matrix->v[2][2] = 1.0;	//convert to degrees? do it here if needed
 		
 		initialized = 1;
 	}
@@ -198,15 +198,18 @@ void transformNS(){//in progress
 	currentns_vector->v[0] = (current->ns_f->x);
 	currentns_vector->v[1] = (current->ns_f->y);
 	currentns_vector->v[2] = (current->ns_f->theta);
+	PrintVector(currentns_vector);//diagnostic
 	
 	//initialize working_vector //temp storage
 	
 	//do some math and store the results in currentstance x y and theta
 	//shift + --> rotate * --> scale *
 	AddVectors(currentns_vector, shift_vector, working_vector);//shift
+	PrintVector(working_vector);//diagnostic
 	MultMatVec(clockwise_matrix, working_vector, working_vector_2);//rotate
+	PrintVector(working_vector_2);//diagnostic
 	MultMatVec(scale_matrix, working_vector_2, current->nsTranslated);//scale
-	
+	PrintVector(current->nsTranslated);//diagnostic
 	// free all working vectors
 	free(currentns_vector);
 	free(working_vector);
@@ -245,5 +248,5 @@ void get_Distance(robot_if_t *ri, float *dist){
 void exit_pos(){
 	free_stance(initial);
 	free_stance(current);
-	free_stance(previous);  
+	free_stance(previous);
 }

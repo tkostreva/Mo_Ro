@@ -119,7 +119,7 @@ int main(int argv, char **argc) {
 		
 						
 		get_Distance(&ri, &dist_y);
-		print_stance_csv();
+		//print_stance_csv();
 		printf("Distance from start = %fcm\n", dist_y);
         } while(dist_y < target_dist);
 #endif
