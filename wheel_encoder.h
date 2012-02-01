@@ -3,6 +3,7 @@
 
 #include <robot_if.h>
 #include <stdio.h>
+#include "matvec.h"
 
 #define WE_TICKS_TO_CM		3.3
 

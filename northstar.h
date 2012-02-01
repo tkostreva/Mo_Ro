@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "matvec.h"
 
 #define NS_SCALING_FACTOR	90000.0
 #define NS_TICKS_TO_CM 		90.0

@@ -4,6 +4,10 @@
 
 #include "northstar.h"
 
+vector *shift_vector;
+matrix *clockwise_matrix;
+matrix *scale_matrix;
+
 // Populate NorthStar Stance Object from sensor data
 void get_ns(ns_stance *s, robot_if_t *ri ) {
 	s->x = ri_getX(ri);
@@ -12,6 +16,83 @@ void get_ns(ns_stance *s, robot_if_t *ri ) {
 	s->sig =  ri_getNavStrengthRaw(ri);
 	s->room = ri_getRoomID(ri);
 	
+}
+
+void init_transforms(ns_stance *s) {
+	// free pointers in case previously declared
+	free(shift_vector);
+	free(clockwise_matrix);
+	free(scale_matrix);
+  
+	// get memory for pointers
+	shift_vector = calloc(1, sizeof(vector));
+	clockwise_matrix = calloc(1, sizeof(matrix));
+	scale_matrix = calloc(1, sizeof(matrix));
+	
+	// initialize shift vector
+	shift_vector->v[0] = (-1)*(s->x);
+	shift_vector->v[1] = (-1)*(s->y);
+	shift_vector->v[2] = (-1)*(s->theta);
+	
+	//initialize clockwise_matrix
+	
+	clockwise_matrix->v[0][0] = (double)cos(s->theta);
+	clockwise_matrix->v[0][1] = (double)sin(s->theta);
+	clockwise_matrix->v[0][2] = 0.0;
+	
+	clockwise_matrix->v[1][0] = (double)( -1 * sin(s->theta) );
+	clockwise_matrix->v[1][1] = (double) cos(s->theta);
+	clockwise_matrix->v[1][2] = 0.0;
+	
+	clockwise_matrix->v[2][0] = 0.0;
+	clockwise_matrix->v[2][1] = 0.0;
+	clockwise_matrix->v[2][2] = 1.0;
+	
+	//initialize scale_matrix
+	scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
+	scale_matrix->v[0][1] = 0.0;
+	scale_matrix->v[0][2] = 0.0;
+	
+	scale_matrix->v[1][0] = 0.0;
+	scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
+	scale_matrix->v[1][2] = 0.0;
+	
+	scale_matrix->v[2][0] = 0.0;
+	scale_matrix->v[2][1] = 0.0;
+	scale_matrix->v[2][2] = 1.0;	//convert to degrees? do it here if needed
+}
+
+
+vector *transformNS(ns_stance *s){//in progress
+	//use clockwise rotation matrix //(i think since initial theta represents ccw)
+	//shift + --> rotate * --> scale *
+	
+	//initialize shift_vector
+	vector currentns_vector;
+	vector working_vector; 
+	vector working_vector_2;
+	vector *ns_vector = calloc(1, sizeof(vector));
+	
+	//initialize currentns_vector
+	ns_vector->v[0] = (s->x);
+	ns_vector->v[1] = (s->y);
+	ns_vector->v[2] = (s->theta);
+	PrintVector(ns_vector);//diagnostic
+	
+	//shift
+	AddVectors(ns_vector, shift_vector, &working_vector);
+	PrintVector(&working_vector);//diagnostic
+	
+	//rotate
+	MultMatVec(clockwise_matrix, &working_vector, &working_vector_2);
+	PrintVector(&working_vector_2);//diagnostic
+	
+	//scale
+	MultMatVec(scale_matrix, &working_vector_2, ns_vector);
+	PrintVector(current->nsTranslated);//diagnostic
+	// free all working vectors
+	
+	return ns_vector;
 }
 
 float get_ns_dist(ns_stance *current, ns_stance *last) {
@@ -39,17 +120,6 @@ float get_ns_dist(ns_stance *current, ns_stance *last) {
 	
 	// get distance between two points, divide by ticks to cm to get distance traveled
 	return euclidean_distance(x1, y1, x2, y2) / NS_TICKS_TO_CM;
-}
-
-// get euclidean distance between two points ( point 2 - point 1 )
-//  THIS NEEDS DOUBLE CHECKED!--> its good - Spencer
-float euclidean_distance(float x1, float y1, float x2, float y2) {
-	float sum;
-	// sum squares of differences
-	sum = (x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1);
-	// return square root of sum
-	return sqrt( (float) sum );
-	  
 }
 
 // Print out a northstar stance structure

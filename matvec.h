@@ -11,7 +11,6 @@ typedef struct vector
     float v[3];
 } vector;
 
-vector g_vecs[26];
 typedef struct matrix
 {
     float v[3][3];
