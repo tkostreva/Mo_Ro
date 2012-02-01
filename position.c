@@ -86,24 +86,10 @@ robot_stance *create_stance(){
 	return local;
 }
 
+// populate stance with RAW northstar and wheel encoder data
 void get_stance(robot_stance *s, robot_if_t *ri) {
-	// populate stance with northstar and wheel encoder data
 	get_ns(s->ns, ri);
-	get_we(s->we, ri);
-	
-	// filter data
-	s->ns_f->x	= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
-	s->ns_f->y	= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
-	s->ns_f->theta	= fir_Filter(f[2], s->ns->theta, DEEP_FILTER);
-	s->ns_f->sig	= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
-	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, DEEP_FILTER);
-	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, DEEP_FILTER);
-	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, DEEP_FILTER);
-	
-	// Transforms occur here??
-	// s->x = something;
-	// s->y = something;
-	// s->theta = something;
+	get_we(s->we, ri);	
 }
 
 void free_stance(robot_stance *s){
@@ -129,11 +115,61 @@ void init_pos(robot_if_t *ri){
 	initial = create_stance();
 	get_stance(initial, ri);
 	
+	// Setup Northstar Transform matrices based on intial position
+	setup_NS_transforms(initial->ns_f);
+	
 	current = create_stance();
 	get_stance(current, ri);
 	
 	previous = create_stance();
 	get_stance(previous, ri);	
+}
+
+void copy_current_to_prev(){
+	// populate previous with raw data values
+	get_stance(previous, ri);
+	
+	// deep copy all filtered data
+	previous->ns_f->x 		= current->ns_f->x;
+	previous->ns_f->y 		= current->ns_f->y;
+	previous->ns_f->theta		= current->ns_f->theta;
+	previous->ns_f->sig		= current->ns_f->sig;
+	previous->we_f->left_tot	= current->we_f->left_tot;
+	previous->we_f->right_tot	= current->we_f->right_tot;
+	previous->we_f->back_tot	= current->we_f->back_tot;
+	
+	// free old nsTranslated and point to current's nsTranslated
+	free(previous->nsTranslated);
+	previous->nsTranslated = current->nsTranslated;
+	
+	// free old weTranslated and point to current's weTranslated
+	free(previous->weTranslated);
+	previous->weTranslated = current->weTranslated;	
+}
+
+void get_Position(robot_if_t *ri, vector *loc){
+	copy_current_to_prev();
+  
+	update_sensor_data(ri);
+	get_stance(current, ri);
+	
+	// get filtered data for current position
+	s->ns_f->x	= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
+	s->ns_f->y	= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
+	s->ns_f->theta	= fir_Filter(f[2], s->ns->theta, DEEP_FILTER);
+	s->ns_f->sig	= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
+	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, DEEP_FILTER);
+	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, DEEP_FILTER);
+	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, DEEP_FILTER);
+	
+	// Transforms occur here
+	free(s->nsTranslated);
+	nsTranslated = transform_NS(s->ns_F);
+	
+	// s->x = something;
+	// s->y = something;
+	// s->theta = something;
+	
 }
 
 void print_stance_csv(){
@@ -153,20 +189,10 @@ void print_stance_csv(){
 	printf("%d, %d\n", current->nsTranslated->v[0], current->nsTranslated->v[1]);
 }
 
-//returns distance since last reset in cm
-void get_Distance(robot_if_t *ri, float *dist){
-	get_stance(previous, ri);
-	
-	update_sensor_data(ri);
-	get_stance(current, ri);
-	
-//	transformNS();  will now be init_transforms from NS...  then some more stuffy
-	
-	*dist = get_we_dist_FB(current->we);
-}
-
 void exit_pos(){
 	free_stance(initial);
 	free_stance(current);
 	free_stance(previous);
+	
+	exit_ns();
 }

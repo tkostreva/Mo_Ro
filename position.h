@@ -27,12 +27,17 @@ typedef struct _robot_stance_ {
 #define NORTHSTAR_UNRELIABLE_STRENGTH RI_ROBOT_NAV_SIGNAL_WEAK
 
 robot_stance *create_stance();
+
 float delta_theta();
+
 void init_pos(robot_if_t *ri);		//sets up initial coordinates
+
 void resetCoordinates(robot_if_t *ri);	//sets origin to current position 
-void getDistance(robot_if_t *ri, float* dist);	//returns distance since last reset in cm
+
+void get_Position(robot_if_t *ri, vector *loc);
+
 void print_stance_csv();
+
 void exit_pos();			//clean up memory
-void transformNS(); //transform ns stance values and store in stance x and y and theta
 
 #endif
