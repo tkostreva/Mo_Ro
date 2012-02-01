@@ -35,13 +35,13 @@ void setup_NS_transforms(ns_stance *s) {
 	shift_vector->v[1] = (-1)*(s->y);
 	shift_vector->v[2] = (-1)*(s->theta);
 	
-	//initialize COUNTER clockwise_matrix
+	//initialize clockwise_matrix
 	
 	clockwise_matrix->v[0][0] = (double)cos(s->theta);
-	clockwise_matrix->v[0][1] = (double)( -1 * sin(s->theta)); // CW (double)sin(s->theta);
+	clockwise_matrix->v[0][1] = (double)sin(s->theta);
 	clockwise_matrix->v[0][2] = 0.0;
 	
-	clockwise_matrix->v[1][0] = (double)sin(s->theta); // CW (double)( -1 * sin(s->theta) );
+	clockwise_matrix->v[1][0] = (double)( -1 * sin(s->theta) );
 	clockwise_matrix->v[1][1] = (double) cos(s->theta);
 	clockwise_matrix->v[1][2] = 0.0;
 	

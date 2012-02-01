@@ -88,7 +88,10 @@ robot_stance *create_stance(){
 // populate stance with RAW northstar and wheel encoder data
 void get_stance(robot_stance *s, robot_if_t *ri) {
 	get_ns(s->ns, ri);
-	get_we(s->we, ri);	
+	get_we(s->we, ri);
+	
+	s->nsTranslated = (vector *)malloc(sizeof(vector));
+	s->weTranslated = (vector *)malloc(sizeof(vector));
 }
 
 void free_stance(robot_stance *s){
