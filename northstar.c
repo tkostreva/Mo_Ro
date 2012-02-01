@@ -31,9 +31,9 @@ void setup_NS_transforms(ns_stance *s) {
 	scale_matrix = calloc(1, sizeof(matrix));
 	
 	// initialize shift vector
-	shift_vector->v[0] = (-1)*(s->x);
-	shift_vector->v[1] = (-1)*(s->y);
-	shift_vector->v[2] = (-1)*(s->theta);
+	shift_vector->v[0] = (-1.0)*(s->x);
+	shift_vector->v[1] = (-1.0)*(s->y);
+	shift_vector->v[2] = (-1.0)*(s->theta);
 	
 	//initialize clockwise_matrix
 	
@@ -41,7 +41,7 @@ void setup_NS_transforms(ns_stance *s) {
 	clockwise_matrix->v[0][1] = (double)sin(s->theta);
 	clockwise_matrix->v[0][2] = 0.0;
 	
-	clockwise_matrix->v[1][0] = (double)( -1 * sin(s->theta) );
+	clockwise_matrix->v[1][0] = (double)( -1.0 * sin(s->theta) );
 	clockwise_matrix->v[1][1] = (double) cos(s->theta);
 	clockwise_matrix->v[1][2] = 0.0;
 	
@@ -50,17 +50,17 @@ void setup_NS_transforms(ns_stance *s) {
 	clockwise_matrix->v[2][2] = 1.0;
 	
 	//initialize scale_matrix
-	scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
+	scale_matrix->v[0][0] = 1.0/NS_TICKS_PER_CM;
 	scale_matrix->v[0][1] = 0.0;
 	scale_matrix->v[0][2] = 0.0;
 	
 	scale_matrix->v[1][0] = 0.0;
-	scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
+	scale_matrix->v[1][1] = 1.0/NS_TICKS_PER_CM;
 	scale_matrix->v[1][2] = 0.0;
 	
 	scale_matrix->v[2][0] = 0.0;
 	scale_matrix->v[2][1] = 0.0;
-	scale_matrix->v[2][2] = 180.0 / M_PI;	//convert to degrees? do it here if needed
+	scale_matrix->v[2][2] = 1.0;  //180.0 / M_PI to convert to degrees
 }
 
 /* use clockwise rotation matrix //(i think since initial theta represents ccw)
@@ -79,26 +79,31 @@ vector *transform_NS(ns_stance *s){
 	
 	//shift
 	AddVectors(ns_vector, shift_vector, &working_vector);
-	//PrintVector(&working_vector);//diagnostic
+	printf("Add result = ");
+	PrintVector(&working_vector);//diagnostic
 	
 	//rotate
 	MultMatVec(clockwise_matrix, &working_vector, &working_vector_2);
-	//PrintVector(&working_vector_2);//diagnostic
+	printf("Rotate Result = ");
+	PrintVector(&working_vector_2);//diagnostic
 	
 	//scale
 	// Update Scaling Matrix based on current signal strength
+#if 0
 	if(s->sig > 13000) {
 		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
 		scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
 	}
 	else {  // currently keeping scaling factor at 45 per cm when signal strength is high and scaling down to 60 per cm when signal strength is low
-		  scale_matrix->v[0][0] = -0.001875 * s->sig + 69.375;
-		  scale_matrix->v[1][1] = -0.001875 * s->sig + 69.375;
+		  scale_matrix->v[0][0] = 1.0 / ( -0.001875 * s->sig + 69.375 );
+		  scale_matrix->v[1][1] = 1.0 / ( -0.001875 * s->sig + 69.375 );
 		  // possibly scale X and Y seperately?
 	}
+#endif
 	
 	MultMatVec(scale_matrix, &working_vector_2, ns_vector);
-	//PrintVector(current->nsTranslated);//diagnostic
+	printf("Scaling Result = ");
+	PrintVector(ns_vector);//diagnostic
 	return ns_vector;
 }
 

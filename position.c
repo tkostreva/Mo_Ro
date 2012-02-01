@@ -163,9 +163,13 @@ void get_Position(robot_if_t *ri, vector *loc){
 	// Transforms occur here
 	free(current->nsTranslated);
 	current->nsTranslated = transform_NS(current->ns_f);
+	printf("NS Translaotion Result = ");
+	PrintVector(current->nsTranslated);//diagnostic
 	
 	free(current->weTranslated);
 	current->weTranslated = transform_WE(current->we);
+	printf("WE Translaotion Result = ");
+	PrintVector(current->weTranslated);//diagnostic
 	
 	loc->v[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc->v[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
