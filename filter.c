@@ -8,6 +8,8 @@ float shlw_coeffs[SHLW_TAPS] = { 0.22586, 0.3907, 0.3907, 0.22586 };
 filter *fir_Filter_Create() {
 	/* get memory for filter and initilize all values to zero */
 	filter *f = (filter *) calloc(1, sizeof(filter));
+	
+	return f;
 }
 
 float fir_Filter(filter *f, float val, int depth) {

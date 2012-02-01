@@ -159,9 +159,14 @@ void get_Position(robot_if_t *ri, vector *loc){
 	
 	// Transforms occur here
 	free(current->nsTranslated);
-	nsTranslated = transform_NS(s->ns_F);
+	current->nsTranslated = transform_NS(current->ns_f);
 	
-	free(current->weTranslated);	
+	free(current->weTranslated);
+	current->weTranslated = transform_WE(current->we);
+	
+	loc->v[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
+	loc->v[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
+	loc->v[2] = current->nsTranslated->v[2];	
 }
 
 void print_stance_csv(){

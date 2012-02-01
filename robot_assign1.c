@@ -19,10 +19,7 @@ void battery_check( robot_if_t *ri ) {
 int main(int argv, char **argc) {
 	int i;
 	robot_if_t ri;
-	ns_stance initial, current, last;
-	we_stance we_current, we_sum;
-	float dist_y;
-	float dist_x;
+	vector *location = (vector *)calloc(1, sizeof(vector));
 	float target_dist;
 	
         // Make sure we have a valid command line argument
@@ -90,8 +87,6 @@ int main(int argv, char **argc) {
 // Normal Code
 #else
 	
-	dist_y = 0.0;
-		
 	//print_stance_csv();
 	
         // Action loop
@@ -108,7 +103,7 @@ int main(int argv, char **argc) {
 				ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
 			}
 			else {
-				if(dist_y < 0.8 * target_dist) ri_move(&ri, RI_MOVE_FORWARD, RI_FASTEST);
+				if(location->v[1] < 0.8 * target_dist) ri_move(&ri, RI_MOVE_FORWARD, RI_FASTEST);
 				else ri_move(&ri, RI_MOVE_FORWARD, RI_SLOWEST);
 			}
 		}
@@ -118,11 +113,12 @@ int main(int argv, char **argc) {
 		}
 		
 						
-		get_Distance(&ri, &dist_y);
+		get_Position(&ri, location);
 		//print_stance_csv();
-		printf("Distance from start = %fcm\n", dist_y);
-        } while(dist_y < target_dist);
+		printf("Location:  X = %f cm\tY = %f cm\n", location->v[0], location->v[1]);
+        } while(location->v[1] < target_dist);
 #endif
+	free(location);
 	
 	exit_pos();
 	
