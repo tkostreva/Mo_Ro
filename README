@@ -1,20 +1,26 @@
-/// To copy the code from the repository on github
+// To COPY the code from the repository on github
 
 $ git clone git@github.com:your_username/Mo_Ro.git
 
+// To merge REMOTE to LOCAL Repo
+
+$ git pull origin master
 
 // To commit changes to code to your LOCAL git repository (Must be done before code commit to GITHUB)
 
 $ git add ******filename to be add***********
 $ git commit -m 'message you want to attach to this particular commit'
 
+  - OR -
+
+$ git commit -a -m 'your message here'
 
 // To commit changes to the repository on GITHUB
-
-// if you've never pushed to this repository
+-- if you've never pushed to this repository --
 
 $ git remote add origin git@github.com:tkostreva/Mo_Ro
 
+-- THEN --
 // this will update the repository with your code
 
 $ git push origin master

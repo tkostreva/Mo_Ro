@@ -11,7 +11,6 @@
 
 // We are storing all raw data, as well as filtering it
 #define NUM_FILTERS 7
-#define NS_TICKS_PER_CM 45.0
 /* f[0]  NorthStar X filter
  * f[1]  NorthStar Y filter
  * f[2]  NorthStar Theta filter
@@ -125,7 +124,7 @@ void init_pos(robot_if_t *ri){
 	get_stance(previous, ri);	
 }
 
-void copy_current_to_prev(){
+void get_Position(robot_if_t *ri, vector *loc){
 	// populate previous with raw data values
 	get_stance(previous, ri);
 	
@@ -144,32 +143,25 @@ void copy_current_to_prev(){
 	
 	// free old weTranslated and point to current's weTranslated
 	free(previous->weTranslated);
-	previous->weTranslated = current->weTranslated;	
-}
-
-void get_Position(robot_if_t *ri, vector *loc){
-	copy_current_to_prev();
+	previous->weTranslated = current->weTranslated;
   
 	update_sensor_data(ri);
 	get_stance(current, ri);
 	
 	// get filtered data for current position
-	s->ns_f->x	= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
-	s->ns_f->y	= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
-	s->ns_f->theta	= fir_Filter(f[2], s->ns->theta, DEEP_FILTER);
-	s->ns_f->sig	= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
-	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, DEEP_FILTER);
-	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, DEEP_FILTER);
-	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, DEEP_FILTER);
+	current->ns_f->x	= (int)fir_Filter(f[0], (float)current->ns->x, DEEP_FILTER);
+	current->ns_f->y	= (int)fir_Filter(f[1], (float)current->ns->y, DEEP_FILTER);
+	current->ns_f->theta	= fir_Filter(f[2], current->ns->theta, DEEP_FILTER);
+	current->ns_f->sig	= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
+	current->we_f->left_tot	= (int)fir_Filter(f[3], (float)current->we->left_tot, DEEP_FILTER);
+	current->we_f->right_tot	= (int)fir_Filter(f[4], (float)current->we->right_tot, DEEP_FILTER);
+	current->we_f->back_tot	= (int)fir_Filter(f[5], (float)current->we->back_tot, DEEP_FILTER);
 	
 	// Transforms occur here
-	free(s->nsTranslated);
+	free(current->nsTranslated);
 	nsTranslated = transform_NS(s->ns_F);
 	
-	// s->x = something;
-	// s->y = something;
-	// s->theta = something;
-	
+	free(current->weTranslated);	
 }
 
 void print_stance_csv(){
