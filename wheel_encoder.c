@@ -47,7 +47,7 @@ float get_we_Theta(we_stance *s) {
 
 vector *transform_WE(we_stance *s, float theta){
 	vector we_vector = calloc(1, sizeof(vector));
-	float forwardMotion = ((float)(s->left_tot+s->right_tot))/2.0;
+	float forwardMotion = TICKS_PER_CM*((float)(s->left_tot+s->right_tot))/2.0;
 	
 	we_vector->v[0] = -1.0*sin(theta)*forwardMotion;//x
 	we_vector->v[1] = cos(theta)*forwardMotion;//y
