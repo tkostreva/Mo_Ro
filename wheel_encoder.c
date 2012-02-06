@@ -45,12 +45,15 @@ float get_we_Theta(we_stance *s) {
 	return temp;
 }
 
-vector *transform_WE(we_stance *s){
-	vector *we_vector = calloc(1, sizeof(vector));
+vector *transform_WE(we_stance *s, float theta){
+	vector we_vector = calloc(1, sizeof(vector));
+	float forwardMotion = TICKS_PER_CM*((float)(s->left_tot+s->right_tot))/2.0;
 	
-	we_vector->v[0] = (double)get_we_X(s);
-	we_vector->v[1] = (double)get_we_Y(s);
-	we_vector->v[2] = (double)get_we_Theta(s);
+	we_vector->v[0] = -1.0*sin(theta)*forwardMotion;//x
+	we_vector->v[1] = cos(theta)*forwardMotion;//y
+	we_vector->v[2] = theta + get_we_Theta(s);//theta
+	
+	return &we_vector;
 }
 
 void print_we(we_stance *s) {
