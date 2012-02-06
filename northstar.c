@@ -37,12 +37,22 @@ void setup_NS_transforms(ns_stance *s) {
 	
 	//initialize clockwise_matrix
 	
+	/*
 	clockwise_matrix->v[0][0] = (double)cos(s->theta);
 	clockwise_matrix->v[0][1] = (double)sin(s->theta);
 	clockwise_matrix->v[0][2] = 0.0;
 	
 	clockwise_matrix->v[1][0] = (double)( -1.0 * sin(s->theta) );
 	clockwise_matrix->v[1][1] = (double) cos(s->theta);
+	clockwise_matrix->v[1][2] = 0.0;
+	*/
+	//ccw test://seems better but translation is still off
+	clockwise_matrix->v[0][0] = (double)cos(-1.0*s->theta);
+	clockwise_matrix->v[0][1] = (double)sin(-1.0*s->theta);
+	clockwise_matrix->v[0][2] = 0.0;
+	
+	clockwise_matrix->v[1][0] = (double)sin(-1.0*s->theta);
+	clockwise_matrix->v[1][1] = (double)cos(-1.0*s->theta);
 	clockwise_matrix->v[1][2] = 0.0;
 	
 	clockwise_matrix->v[2][0] = 0.0;
