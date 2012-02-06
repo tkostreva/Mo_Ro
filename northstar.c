@@ -77,22 +77,20 @@ void setup_NS_transforms(ns_stance *s) {
 	scale_matrix->v[2][2] = 1.0;  //180.0 / M_PI to convert to degrees
 }
 
-/* use clockwise rotation matrix //(i think since initial theta represents ccw)
- * shift + --> rotate * --> scale */
-vector *transform_NS(ns_stance *s){
-	vector currentns_vector;
+/* Take current data in s, make it the intial inputs for the transformed vector ns
+ * return the updated values in NS to calling function */
+void transform_NS(ns_stance *s, vector *ns){
 	vector working_vector; 
 	vector working_vector_2;
-	vector *ns_vector = calloc(1, sizeof(vector));
-	
-	//initialize currentns_vector
-	ns_vector->v[0] = (s->x);
-	ns_vector->v[1] = (s->y);
-	ns_vector->v[2] = (s->theta);
+		
+	//initialize current ns_vector
+	ns->v[0] = (s->x);
+	ns->v[1] = (s->y);
+	ns->v[2] = (s->theta);
 	PrintVector(ns_vector);//diagnostic
 	
 	//shift
-	AddVectors(ns_vector, shift_vector, &working_vector);
+	AddVectors(ns, shift_vector, &working_vector);
 	printf("Add result = ");
 	PrintVector(&working_vector);//diagnostic
 	
@@ -115,10 +113,9 @@ vector *transform_NS(ns_stance *s){
 	}
 #endif
 	
-	MultMatVec(scale_matrix, &working_vector_2, ns_vector);
+	MultMatVec(scale_matrix, &working_vector_2, ns);
 	printf("Scaling Result = ");
-	PrintVector(ns_vector);//diagnostic
-	return ns_vector;
+	PrintVector(ns);//diagnostic	
 }
 
 // Print out a northstar stance structure

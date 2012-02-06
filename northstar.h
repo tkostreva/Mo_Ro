@@ -23,7 +23,7 @@ void get_ns(ns_stance *s, robot_if_t *ri );
 
 void setup_NS_transforms(ns_stance *s);
 
-vector *transform_NS(ns_stance *s);
+void transform_NS(ns_stance *s, vector *ns);
 
 void print_ns(ns_stance *s);
 

@@ -117,13 +117,15 @@ void copy_stance(robot_stance *original, robot_stance *copy){
 	copy->we_f->right_tot	= original->we_f->right_tot;
 	copy->we_f->back_tot	= original->we_f->back_tot;
 	
-	// free copy nsTranslated and point to original's nsTranslated
-	free(copy->nsTranslated);
-	copy->nsTranslated = original->nsTranslated;
+	// deep copy nsTranslated
+	copy->nsTranslated->v[0] = original->nsTranslated->v[0];
+	copy->nsTranslated->v[1] = original->nsTranslated->v[1];
+	copy->nsTranslated->v[2] = original->nsTranslated->v[2];
 	
-	// free copy weTranslated and point to original's weTranslated
-	free(copy->weTranslated);
-	copy->weTranslated = original->weTranslated;  
+	// deep copy weTranslated
+	copy->weTranslated->v[0] = original->weTranslated->v[0];
+	copy->weTranslated->v[1] = original->weTranslated->v[1];
+	copy->weTranslated->v[2] = original->weTranslated->v[2];	
 }
 
 void free_stance(robot_stance *s){
@@ -144,21 +146,25 @@ void init_pos(robot_if_t *ri){
 	for(i = 0; i < NUM_FILTERS; i++) f[i] = fir_Filter_Create();
 	filter_flush(ri);
 	
-	// Initialize all Robot Stances to current position
+	// Get Memory for all Robot Stances
 	initial = create_stance();
+	current = create_stance();
+	previous = create_stance();
+	
+	// Get Initial position
 	get_stance(initial, ri);
 	
-	printf("Initial NS = ");
-	print_ns(initial->ns);
-	printf("Initial NS_F = ");
-	print_ns(initial->ns_f);
+	//Debugging
+	//printf("Initial NS = ");
+	//print_ns(initial->ns);
+	//printf("Initial NS_F = ");
+	//print_ns(initial->ns_f);
+	
 	// Setup Northstar Transform matrices based on intial position
 	setup_NS_transforms(initial->ns_f);
 	
-	current = create_stance();
+	// Copy Initial into current and previous to initialize them
 	copy_stance(initial, current);
-	
-	previous = create_stance();
 	copy_stance(initial, previous);
 }
 
@@ -170,7 +176,7 @@ void get_Position(robot_if_t *ri, vector *loc){
 	get_stance(current, ri);
 	
 	// Transforms occur here
-	current->nsTranslated = transform_NS(current->ns_f);
+	transform_NS(current->ns_f, current->nsTranslated);
 	printf("NS Translation Result = ");
 	PrintVector(current->nsTranslated);//diagnostic
 	
