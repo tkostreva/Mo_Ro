@@ -87,7 +87,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	ns->v[0] = (s->x);
 	ns->v[1] = (s->y);
 	ns->v[2] = (s->theta);
-	PrintVector(ns_vector);//diagnostic
+	PrintVector(ns);//diagnostic
 	
 	//shift
 	AddVectors(ns, shift_vector, &working_vector);

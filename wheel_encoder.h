@@ -3,7 +3,6 @@
 
 #include <robot_if.h>
 #include <stdio.h>
-#include <math.h>
 #include "matvec.h"
 
 #define WE_TICKS_PER_CM		3.3
@@ -21,7 +20,7 @@ typedef struct _we_stance_ {
 // Populate Wheel Encoder Stance Object from sensor data
 void get_we(we_stance *s, robot_if_t *ri );
 
-vector *transform_WE(we_stance *s, float theta);
+void transform_WE(we_stance *s, vector *ws, float theta);
 
 void print_we(we_stance *s);
 

@@ -180,7 +180,7 @@ void get_Position(robot_if_t *ri, vector *loc){
 	printf("NS Translation Result = ");
 	PrintVector(current->nsTranslated);//diagnostic
 	
-	current->weTranslated = transform_WE(current->we);
+	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
 	printf("WE Translation Result = ");
 	PrintVector(current->weTranslated);//diagnostic
 	
