@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include "matvec.h"
 
-#define WE_TICKS_PER_CM		4.0
+#define WE_TICKS_PER_CM		3.3
 
 typedef struct _we_stance_ {
 	int left_tot;

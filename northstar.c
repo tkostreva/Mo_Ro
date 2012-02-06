@@ -30,29 +30,33 @@ void setup_NS_transforms(ns_stance *s) {
 	clockwise_matrix = calloc(1, sizeof(matrix));
 	scale_matrix = calloc(1, sizeof(matrix));
 	
+	print_ns(s);
+	
 	// initialize shift vector
-	shift_vector->v[0] = (-1.0)*(s->x);
-	shift_vector->v[1] = (-1.0)*(s->y);
+	shift_vector->v[0] = (-1.0)*((float)s->x);
+	shift_vector->v[1] = (-1.0)*((float)s->y);
 	shift_vector->v[2] = (-1.0)*(s->theta);
+	printf("Shift Vector is ");
+	PrintVector(shift_vector);
 	
 	//initialize clockwise_matrix
 	
 	/*
-	clockwise_matrix->v[0][0] = (double)cos(s->theta);
-	clockwise_matrix->v[0][1] = (double)sin(s->theta);
+	clockwise_matrix->v[0][0] = cos(s->theta);
+	clockwise_matrix->v[0][1] = sin(s->theta);
 	clockwise_matrix->v[0][2] = 0.0;
 	
-	clockwise_matrix->v[1][0] = (double)( -1.0 * sin(s->theta) );
-	clockwise_matrix->v[1][1] = (double) cos(s->theta);
+	clockwise_matrix->v[1][0] = ( -1.0 * sin(s->theta) );
+	clockwise_matrix->v[1][1] = cos(s->theta);
 	clockwise_matrix->v[1][2] = 0.0;
 	*/
 	//ccw test://seems better but translation is still off
-	clockwise_matrix->v[0][0] = (double)cos(-1.0*s->theta);
-	clockwise_matrix->v[0][1] = (double)sin(-1.0*s->theta);
+	clockwise_matrix->v[0][0] = cos(-1.0*s->theta);
+	clockwise_matrix->v[0][1] = sin(-1.0*s->theta);
 	clockwise_matrix->v[0][2] = 0.0;
 	
-	clockwise_matrix->v[1][0] = (double)sin(-1.0*s->theta);
-	clockwise_matrix->v[1][1] = (double)cos(-1.0*s->theta);
+	clockwise_matrix->v[1][0] = sin(-1.0*s->theta);
+	clockwise_matrix->v[1][1] = cos(-1.0*s->theta);
 	clockwise_matrix->v[1][2] = 0.0;
 	
 	clockwise_matrix->v[2][0] = 0.0;
@@ -60,12 +64,12 @@ void setup_NS_transforms(ns_stance *s) {
 	clockwise_matrix->v[2][2] = 1.0;
 	
 	//initialize scale_matrix
-	scale_matrix->v[0][0] = 1.0/NS_TICKS_PER_CM;
+	scale_matrix->v[0][0] = -1.0/NS_TICKS_PER_CM;
 	scale_matrix->v[0][1] = 0.0;
 	scale_matrix->v[0][2] = 0.0;
 	
 	scale_matrix->v[1][0] = 0.0;
-	scale_matrix->v[1][1] = 1.0/NS_TICKS_PER_CM;
+	scale_matrix->v[1][1] = -1.0/NS_TICKS_PER_CM;
 	scale_matrix->v[1][2] = 0.0;
 	
 	scale_matrix->v[2][0] = 0.0;

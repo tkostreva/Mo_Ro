@@ -94,18 +94,18 @@ int main(int argv, char **argc) {
                 // Move forward unless there's something in front of the robot
                 if(!ri_IR_Detected(&ri)) {
 			// Straigten out robot if neccessary
-			if ( delta_theta() > 0.175 ) {
-				ri_move(&ri, RI_TURN_RIGHT, 6);
-				ri_move(&ri, RI_MOVE_FWD_RIGHT, RI_SLOWEST);
-			}
-			else if ( delta_theta() < -0.175 ) {
-				ri_move(&ri, RI_TURN_LEFT, 6);
-				ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
-			}
-			else {
+			//if ( delta_theta() > 0.175 ) {
+			//	ri_move(&ri, RI_TURN_RIGHT, 6);
+			//	ri_move(&ri, RI_MOVE_FWD_RIGHT, RI_SLOWEST);
+			//}
+			//else if ( delta_theta() < -0.175 ) {
+			//	ri_move(&ri, RI_TURN_LEFT, 6);
+		//		ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
+		//	}
+		//	else {
 				if(location->v[1] < 0.8 * target_dist) ri_move(&ri, RI_MOVE_FORWARD, RI_FASTEST);
 				else ri_move(&ri, RI_MOVE_FORWARD, RI_SLOWEST);
-			}
+		//	}
 		}
 		else {
 			printf("I found an obstacle!  Stopping!\n\n");
