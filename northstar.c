@@ -37,8 +37,9 @@ void setup_NS_transforms(ns_stance *s) {
 	shift_vector->v[0] = (-1.0)*((float)s->x);
 	shift_vector->v[1] = (-1.0)*((float)s->y);
 	shift_vector->v[2] = (-1.0)*(s->theta);
-	printf("Shift Vector is ");
-	PrintVector(shift_vector);
+	//diagnostic
+	//printf("Shift Vector is ");
+	//PrintVector(shift_vector);
 	
 	//initialize clockwise_matrix
 	

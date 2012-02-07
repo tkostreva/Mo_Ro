@@ -108,7 +108,7 @@ int main(int argv, char **argc) {
 		//	}
 		}
 		else {
-			printf("I found an obstacle!  Stopping!\n\n");
+			//printf("I found an obstacle!  Stopping!\n\n");
 			break;
 		}
 		

@@ -196,7 +196,9 @@ void print_stance_csv(){
 	
 	// print out header for CSV file on first pass
 	if ( init == 0 ) {
-		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T, Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F, NS_xfm_X, NS_xfm_Y\n");
+		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T,", 
+			" Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F, NS_xfm_X, NS_xfm_Y, NS_xfm_T,",
+			" WE_xfm_X, WE_xfm_Y, WE_xfm_T\n");
 		init = 1;
 	}
 	
@@ -205,7 +207,9 @@ void print_stance_csv(){
 	print_ns_csv(current->ns);
 	printf(", %d, %d, %f, %d", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
 	
-	printf("%d, %d\n", current->nsTranslated->v[0], current->nsTranslated->v[1]);
+	printf("%f, %f, %f, %f, %f, %f\n", current->nsTranslated->v[0], current->nsTranslated->v[1],
+		current->nsTranslated->v[2], current->weTranslated->v[0], current->weTranslated->v[1],
+		current->weTranslated->v[2]);
 }
 
 void exit_pos(){
