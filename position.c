@@ -177,12 +177,14 @@ void get_Position(robot_if_t *ri, vector *loc){
 	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
-	printf("NS Translation Result = ");
-	PrintVector(current->nsTranslated);//diagnostic
+	//diagnostic
+	//printf("NS Translation Result = ");
+	//PrintVector(current->nsTranslated);
 	
 	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
-	printf("WE Translation Result = ");
-	PrintVector(current->weTranslated);//diagnostic
+	//diagnostic
+	//printf("WE Translation Result = ");
+	//PrintVector(current->weTranslated);
 	
 	loc->v[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc->v[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;

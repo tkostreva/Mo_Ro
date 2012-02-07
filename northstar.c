@@ -30,7 +30,8 @@ void setup_NS_transforms(ns_stance *s) {
 	clockwise_matrix = calloc(1, sizeof(matrix));
 	scale_matrix = calloc(1, sizeof(matrix));
 	
-	print_ns(s);
+	//diagnostic
+	//print_ns(s);
 	
 	// initialize shift vector
 	shift_vector->v[0] = (-1.0)*((float)s->x);
@@ -87,17 +88,19 @@ void transform_NS(ns_stance *s, vector *ns){
 	ns->v[0] = (s->x);
 	ns->v[1] = (s->y);
 	ns->v[2] = (s->theta);
-	PrintVector(ns);//diagnostic
+	//PrintVector(ns);//diagnostic
 	
 	//shift
 	AddVectors(ns, shift_vector, &working_vector);
-	printf("Add result = ");
-	PrintVector(&working_vector);//diagnostic
+	//diagnostic
+	//printf("Add result = ");
+	//PrintVector(&working_vector);
 	
 	//rotate
 	MultMatVec(clockwise_matrix, &working_vector, &working_vector_2);
-	printf("Rotate Result = ");
-	PrintVector(&working_vector_2);//diagnostic
+	//diagnostic
+	//printf("Rotate Result = ");
+	//PrintVector(&working_vector_2);
 	
 	//scale
 	// Update Scaling Matrix based on current signal strength
@@ -114,8 +117,9 @@ void transform_NS(ns_stance *s, vector *ns){
 #endif
 	
 	MultMatVec(scale_matrix, &working_vector_2, ns);
-	printf("Scaling Result = ");
-	PrintVector(ns);//diagnostic	
+	//diagnostic
+	//printf("Scaling Result = ");
+	//PrintVector(ns);
 }
 
 // Print out a northstar stance structure

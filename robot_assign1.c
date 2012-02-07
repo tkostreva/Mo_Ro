@@ -114,8 +114,8 @@ int main(int argv, char **argc) {
 		
 						
 		get_Position(&ri, location);
-		//print_stance_csv();
-		printf("Location:  X = %f cm\tY = %f cm\n", location->v[0], location->v[1]);
+		print_stance_csv();
+		//printf("Location:  X = %f cm\tY = %f cm\n", location->v[0], location->v[1]);
         } while(location->v[1] < target_dist);
 #endif
 	free(location);
