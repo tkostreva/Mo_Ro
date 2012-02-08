@@ -4,8 +4,14 @@ LIB_LINK=-lhighgui -lcv -lcxcore -lm
 
 all: robot
 
+cal: theta_cal.o northstar.o wheel_encoder.o filter.o position.o
+	gcc ${CFLAGS} -o cal theta_cal.o position.o northstar.o wheel_encoder.o filter.o matvec.o ${LIB_FLAGS} ${LIB_LINK}
+
 robot: robot_assign1.o northstar.o wheel_encoder.o filter.o position.o
 	gcc ${CFLAGS} -o robot robot_assign1.o position.o northstar.o wheel_encoder.o filter.o matvec.o ${LIB_FLAGS} ${LIB_LINK}
+
+theta_cal.o: theta_cal.c position.o matvec.o
+	gcc ${CFLAGS} -c theta_cal.c
 
 robot_assign1.o: robot_assign1.c position.o matvec.o
 	gcc ${CFLAGS} -c robot_assign1.c
