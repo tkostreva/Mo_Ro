@@ -182,13 +182,6 @@ void init_pos(robot_if_t *ri){
 }
 
 void get_Position(robot_if_t *ri, vector *loc){
-	float *WE_data,
-	      *NS_data;
-	int i;
-	
-	WE_data = (float *) malloc(3*sizeof(float));
-	NS_data = (float *) malloc(3*sizeof(float));
-	
 	// copy current stance into previous
 	copy_stance(current, previous);
 	  
@@ -197,6 +190,7 @@ void get_Position(robot_if_t *ri, vector *loc){
 	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
+	
 	//diagnostic
 	printf("NS Translation Result = ");
 	PrintVector(current->nsTranslated);
@@ -205,25 +199,17 @@ void get_Position(robot_if_t *ri, vector *loc){
 	//diagnostic
 	printf("WE Translation Result = ");
 	PrintVector(current->weTranslated);
-	
+	/*  Old average of both transforms
 	loc->v[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc->v[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
 	loc->v[2] = current->nsTranslated->v[2];
+	*/
+	rovioKalmanFilter(kfilter, current->nsTranslated->v, current->weTranslated->v, track);
 	
-	for (i = 0; i < 3; i++){
-	  NS_data[i] = current->nsTranslated->v[i];
-	  WE_data[i] = current->weTranslated->v[i];
-	}
-	
-	
-	//printf("NS transformation: %f, %f, %f\n", current->nsTranslated->v[0],current->nsTranslated->v[1],current->nsTranslated->v[2]);
-	//printf("WE transformation: %f, %f, %f\n", current->weTranslated->v[0],current->weTranslated->v[1],current->weTranslated->v[2]);
-	rovioKalmanFilter(kfilter,  current->nsTranslated->v, current->weTranslated->v, track);
-	//rovioKalmanFilter(kfilter, NS_data, WE_data, track);	    
-	printf("%f,%f,%f\n", track[0],track[1],track[2]);
-	  
-	
-	//kalman_count++;
+	printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);
+	loc->v[0] = track[0];
+	loc->v[1] = track[1];
+	loc->v[2] = track[2];
 }
 
 void print_stance_csv(){
