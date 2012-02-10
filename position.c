@@ -198,13 +198,13 @@ void get_Position(robot_if_t *ri, vector *loc){
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
 	//diagnostic
-	//printf("NS Translation Result = ");
-	//PrintVector(current->nsTranslated);
+	printf("NS Translation Result = ");
+	PrintVector(current->nsTranslated);
 	
 	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
 	//diagnostic
-	//printf("WE Translation Result = ");
-	//PrintVector(current->weTranslated);
+	printf("WE Translation Result = ");
+	PrintVector(current->weTranslated);
 	
 	loc->v[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc->v[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
@@ -231,10 +231,10 @@ void print_stance_csv(){
 	
 	// print out header for CSV file on first pass
 	if ( init == 0 ) {
-		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T," 
-			" Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F, NS_xfm_X, NS_xfm_Y, NS_xfm_T,"
-			" WE_xfm_X, WE_xfm_Y, WE_xfm_T\n");
-		init = 1;
+	        printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T,"); 
+	        printf(" Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F, NS_xfm_X, NS_xfm_Y, NS_xfm_T,");
+	        printf(" WE_xfm_X, WE_xfm_Y, WE_xfm_T\n");
+	        init = 1;
 	}
 	
 	print_we_csv(current->we);

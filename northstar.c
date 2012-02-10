@@ -5,8 +5,15 @@
 #include "northstar.h"
 
 vector *shift_vector;
-matrix *clockwise_matrix;
+matrix *rotation_matrix;
 matrix *scale_matrix;
+
+float theta_cor[] = {
+	-0.559143, /*ROOM TWO THETA COR*/
+	 0.136328, /*ROOM THREE THETA COR*/
+	-1.545036, /*ROOM FOUR THETA COR*/
+	 0.052755  /*ROOM FIVE THETA COR*/
+};
 
 // Populate NorthStar Stance Object from sensor data
 void get_ns(ns_stance *s, robot_if_t *ri ) {
@@ -20,14 +27,16 @@ void get_ns(ns_stance *s, robot_if_t *ri ) {
 
 // Setup the transformation matrices with values stored in NS stance s
 void setup_NS_transforms(ns_stance *s) {
+	float rot_theta = theta_cor[s->room - 2];
+  
 	// free pointers in case previously declared
 	free(shift_vector);
-	free(clockwise_matrix);
+	free(rotation_matrix);
 	free(scale_matrix);
   
 	// get memory for pointers
 	shift_vector = calloc(1, sizeof(vector));
-	clockwise_matrix = calloc(1, sizeof(matrix));
+	rotation_matrix = calloc(1, sizeof(matrix));
 	scale_matrix = calloc(1, sizeof(matrix));
 	
 	//diagnostic
@@ -41,37 +50,26 @@ void setup_NS_transforms(ns_stance *s) {
 	//printf("Shift Vector is ");
 	//PrintVector(shift_vector);
 	
-	//initialize clockwise_matrix
+	//initialize rotation_matrix
+	rotation_matrix->v[0][0] = cos(rot_theta);
+	rotation_matrix->v[0][1] = -1.0 * sin(rot_theta);
+	rotation_matrix->v[0][2] = 0.0;
 	
-	/*
-	clockwise_matrix->v[0][0] = cos(s->theta);
-	clockwise_matrix->v[0][1] = sin(s->theta);
-	clockwise_matrix->v[0][2] = 0.0;
+	rotation_matrix->v[1][0] = sin(rot_theta);
+	rotation_matrix->v[1][1] = cos(rot_theta);
+	rotation_matrix->v[1][2] = 0.0;
 	
-	clockwise_matrix->v[1][0] = ( -1.0 * sin(s->theta) );
-	clockwise_matrix->v[1][1] = cos(s->theta);
-	clockwise_matrix->v[1][2] = 0.0;
-	*/
-	//ccw test://seems better but translation is still off
-	clockwise_matrix->v[0][0] = cos(-1.0*s->theta);
-	clockwise_matrix->v[0][1] = sin(-1.0*s->theta);
-	clockwise_matrix->v[0][2] = 0.0;
-	
-	clockwise_matrix->v[1][0] = sin(-1.0*s->theta);
-	clockwise_matrix->v[1][1] = cos(-1.0*s->theta);
-	clockwise_matrix->v[1][2] = 0.0;
-	
-	clockwise_matrix->v[2][0] = 0.0;
-	clockwise_matrix->v[2][1] = 0.0;
-	clockwise_matrix->v[2][2] = 1.0;
+	rotation_matrix->v[2][0] = 0.0;
+	rotation_matrix->v[2][1] = 0.0;
+	rotation_matrix->v[2][2] = 1.0;
 	
 	//initialize scale_matrix
-	scale_matrix->v[0][0] = -1.0/NS_TICKS_PER_CM;
+	scale_matrix->v[0][0] = 1.0/NS_TICKS_PER_CM;
 	scale_matrix->v[0][1] = 0.0;
 	scale_matrix->v[0][2] = 0.0;
 	
 	scale_matrix->v[1][0] = 0.0;
-	scale_matrix->v[1][1] = -1.0/NS_TICKS_PER_CM;
+	scale_matrix->v[1][1] = 1.0/NS_TICKS_PER_CM;
 	scale_matrix->v[1][2] = 0.0;
 	
 	scale_matrix->v[2][0] = 0.0;
@@ -98,7 +96,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	//PrintVector(&working_vector);
 	
 	//rotate
-	MultMatVec(clockwise_matrix, &working_vector, &working_vector_2);
+	MultMatVec(rotation_matrix, &working_vector, &working_vector_2);
 	//diagnostic
 	//printf("Rotate Result = ");
 	//PrintVector(&working_vector_2);
@@ -136,6 +134,6 @@ void print_ns_csv(ns_stance *s){
 
 void exit_ns(){
 	free(shift_vector);
-	free(clockwise_matrix);
+	free(rotation_matrix);
 	free(scale_matrix);  
 }

@@ -36,6 +36,8 @@ void resetCoordinates(robot_if_t *ri);	//sets origin to current position
 
 void get_Position(robot_if_t *ri, vector *loc);
 
+int NS_theta_cal(robot_if_t *ri, vector *u);
+
 void print_stance_csv();
 
 void exit_pos();			//clean up memory

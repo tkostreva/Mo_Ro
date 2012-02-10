@@ -10,19 +10,8 @@ void get_we(we_stance *s, robot_if_t *ri ) {
 	s->back_delta = ri_getWheelEncoder( ri, RI_WHEEL_REAR );
 }
 
-// Currently Reports LEFT/RIGHT distance from TOTALS
-float get_we_X(we_stance *s) {
-	float avg;
-	avg = s->right_tot * cos(120.0 / 180.0 * M_PI);
-	avg += s->left_tot * cos(60.0 / 180.0 * M_PI);
-	avg += s->back_tot;
-	avg /= 3.0;
-	
-	return avg / WE_TICKS_PER_CM;	
-}
-
 // Currently Reports FRONT/BACK distance from TOTALS
-float get_we_Y(we_stance *s) {
+float get_we_X(we_stance *s) {
 	float avg;
 	//print_we(s);
 	avg = s->right_tot * sin(120.0 / 180.0 * M_PI);
@@ -32,6 +21,17 @@ float get_we_Y(we_stance *s) {
 	//printf("Avg = %f\n", avg);
 	
 	return avg;
+}
+
+// Currently Reports LEFT/RIGHT distance from TOTALS
+float get_we_Y(we_stance *s) {
+	float avg;
+	avg = s->right_tot * cos(120.0 / 180.0 * M_PI);
+	avg += s->left_tot * cos(60.0 / 180.0 * M_PI);
+	avg += s->back_tot;
+	avg /= 3.0;
+	
+	return avg / WE_TICKS_PER_CM;	
 }
 
 // Currently Reports Theta in radians for change of back WE since last
@@ -46,8 +46,8 @@ float get_we_Theta(we_stance *s) {
 }
 
 void transform_WE(we_stance *s, vector *ws, float theta){
-	ws->v[0] = sin(theta) * get_we_X(s);
-	ws->v[1] = cos(theta) * get_we_Y(s);
+	ws->v[0] = /*sin(theta) * */ get_we_X(s);
+	ws->v[1] = /*cos(theta) * */ get_we_Y(s);
 	ws->v[2] = theta + get_we_Theta(s);
 }
 

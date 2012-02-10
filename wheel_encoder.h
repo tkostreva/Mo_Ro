@@ -4,8 +4,8 @@
 #include <robot_if.h>
 #include <stdio.h>
 #include "matvec.h"
-
-#define WE_TICKS_PER_CM		3.7
+//rosie
+#define WE_TICKS_PER_CM		3.615
 
 typedef struct _we_stance_ {
 	int left_tot;
