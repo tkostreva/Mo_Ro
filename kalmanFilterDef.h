@@ -27,7 +27,7 @@
 #define PROCESS_UNCERTAINTY_TH .05
 
 // the following structure defines the important matrices and constants that make up the filter
-typedef struct {
+typedef struct{
   // the first part of the filter definition is a set of diagonal matrixes loaded with the uncertainties
   // the matrices are diagonal in the first three elements, since velocity and acceleration are not measuure, uncertainty = 0
   float Q[FILTER_SIZE * FILTER_SIZE];  // this is a diagonal matrix (over 1st three elements) with the process uncertainty

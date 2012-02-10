@@ -8,6 +8,7 @@
  */
 
 #include "position.h"
+#include "kalmanFilterDef.h"
 
 // We are storing all raw data, as well as filtering it
 #define NUM_FILTERS 7
@@ -23,8 +24,11 @@
 /* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
 robot_stance *initial, *current, *previous;
+kalmanFilter *kfilter;
+//int kalman_count = 0;
+float *track;
 
-// Update the robot's sensor information
+// Update the robot's sensor information 
 void update_sensor_data( robot_if_t *ri ) {
 	// If first sensor update fails to respond, try one more time before giving up
 	if(ri_update(ri) != RI_RESP_SUCCESS) {
@@ -138,10 +142,13 @@ void free_stance(robot_stance *s){
 
 void init_pos(robot_if_t *ri){
 	int i;
-	
+	float vel[3] = { 350.0/54.0, 5.0, 0 };
+	float pos[3] = {0, 0, 0};
+	int deltaT = 1;
 	// Get initial Northstar position
 	update_sensor_data(ri);
 		
+	
 	// Initialize and flush filters
 	for(i = 0; i < NUM_FILTERS; i++) f[i] = fir_Filter_Create();
 	filter_flush(ri);
@@ -163,12 +170,25 @@ void init_pos(robot_if_t *ri){
 	// Setup Northstar Transform matrices based on intial position
 	setup_NS_transforms(initial->ns_f);
 	
+	
 	// Copy Initial into current and previous to initialize them
 	copy_stance(initial, current);
 	copy_stance(initial, previous);
+	
+	// allocate memory for kalmanfilter
+	kfilter = (kalmanFilter *) calloc(1, sizeof(kalmanFilter));
+	track = (float *) malloc(9*sizeof(float));
+	initKalmanFilter(kfilter, pos, vel, deltaT);
 }
 
 void get_Position(robot_if_t *ri, vector *loc){
+	float *WE_data,
+	      *NS_data;
+	int i;
+	
+	WE_data = (float *) malloc(3*sizeof(float));
+	NS_data = (float *) malloc(3*sizeof(float));
+	
 	// copy current stance into previous
 	copy_stance(current, previous);
 	  
@@ -188,7 +208,22 @@ void get_Position(robot_if_t *ri, vector *loc){
 	
 	loc->v[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc->v[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
-	loc->v[2] = current->nsTranslated->v[2];	
+	loc->v[2] = current->nsTranslated->v[2];
+	
+	for (i = 0; i < 3; i++){
+	  NS_data[i] = current->nsTranslated->v[i];
+	  WE_data[i] = current->weTranslated->v[i];
+	}
+	
+	
+	//printf("NS transformation: %f, %f, %f\n", current->nsTranslated->v[0],current->nsTranslated->v[1],current->nsTranslated->v[2]);
+	//printf("WE transformation: %f, %f, %f\n", current->weTranslated->v[0],current->weTranslated->v[1],current->weTranslated->v[2]);
+	rovioKalmanFilter(kfilter,  current->nsTranslated->v, current->weTranslated->v, track);
+	//rovioKalmanFilter(kfilter, NS_data, WE_data, track);	    
+	printf("%f,%f,%f\n", track[0],track[1],track[2]);
+	  
+	
+	//kalman_count++;
 }
 
 void print_stance_csv(){
@@ -196,8 +231,8 @@ void print_stance_csv(){
 	
 	// print out header for CSV file on first pass
 	if ( init == 0 ) {
-		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T,", 
-			" Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F, NS_xfm_X, NS_xfm_Y, NS_xfm_T,",
+		printf("L_tot, L_dlt, R_tot, R_dlt, B_tot, B_dlt, L_F, R_F, B_F, NS_X, NS_Y, NS_T," 
+			" Sig, Room, NS_X_F, NS_Y_F, NS_T_F, NS_Sig_F, NS_xfm_X, NS_xfm_Y, NS_xfm_T,"
 			" WE_xfm_X, WE_xfm_Y, WE_xfm_T\n");
 		init = 1;
 	}
@@ -216,6 +251,8 @@ void exit_pos(){
 	free_stance(initial);
 	free_stance(current);
 	free_stance(previous);
+	
+	free(kfilter);
 	
 	exit_ns();
 }
