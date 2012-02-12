@@ -23,7 +23,7 @@
 
 /* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
-robot_stance *initial, *current, *previous;
+robot_stance *initial, *current, *previous, *room_change;
 kalmanFilter *kfilter;
 //int kalman_count = 0;
 float *track;
@@ -112,6 +112,10 @@ void get_stance(robot_stance *s, robot_if_t *ri) {
 }
 
 void copy_stance(robot_stance *original, robot_stance *copy){
+	// deep copy room id data
+	copy->ns->room 		= original->ns->room;
+	copy->ns_f->room 	= original->ns_f->room;
+	
 	// deep copy all filtered data
 	copy->ns_f->x 		= original->ns_f->x;
 	copy->ns_f->y 		= original->ns_f->y;
@@ -157,6 +161,7 @@ void init_pos(robot_if_t *ri){
 	initial = create_stance();
 	current = create_stance();
 	previous = create_stance();
+	room_change = create_stance();
 	
 	// Get Initial position
 	get_stance(initial, ri);
@@ -188,6 +193,9 @@ void get_Position(robot_if_t *ri, vector *loc){
 	update_sensor_data(ri);
 	get_stance(current, ri);
 	
+	// check for room change
+	room_change_check(current, previous);
+	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
 	
@@ -206,10 +214,23 @@ void get_Position(robot_if_t *ri, vector *loc){
 	*/
 	rovioKalmanFilter(kfilter, current->nsTranslated->v, current->weTranslated->v, track);
 	
-	printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);
+	//printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);
 	loc->v[0] = track[0];
 	loc->v[1] = track[1];
 	loc->v[2] = track[2];
+}
+
+void room_change_check(robot_stance *cur, robot_stance *prev){
+	// store previous data into room_change if room id changes
+	printf("current room = %d, previous room = %d\n ", cur->ns->room, prev->ns->room);
+	
+	if (cur->ns->room != prev->ns->room){
+		copy_stance(prev, room_change);
+		printf("\n\n---------------------Room change-------------------\n\n");
+		printf("Room Change Results: %f, %f, %f, %f, %f, %f\n", room_change->nsTranslated->v[0], room_change->nsTranslated->v[1],
+		room_change->nsTranslated->v[2], room_change->weTranslated->v[0], room_change->weTranslated->v[1],
+		room_change->weTranslated->v[2]);
+	}
 }
 
 void print_stance_csv(){
@@ -226,7 +247,7 @@ void print_stance_csv(){
 	print_we_csv(current->we);
 	printf(", %d, %d, %d, ", current->we_f->left_tot, current->we_f->right_tot, current->we_f->back_tot);
 	print_ns_csv(current->ns);
-	printf(", %d, %d, %f, %d", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
+	printf(", %d, %d, %f, %d, ", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
 	
 	printf("%f, %f, %f, %f, %f, %f\n", current->nsTranslated->v[0], current->nsTranslated->v[1],
 		current->nsTranslated->v[2], current->weTranslated->v[0], current->weTranslated->v[1],
