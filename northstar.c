@@ -24,6 +24,43 @@ void get_ns(ns_stance *s, robot_if_t *ri ) {
 	s->room = ri_getRoomID(ri);
 	
 }
+//updates ns transform vecotrs to be accurate after a room change
+void update_NS_transforms_after_room_change(ns_stance *before, ns_stance *after){
+	vector working_vector = calloc(1, sizeof(vector)); //temp
+	vector room_shift_vector = calloc(1, sizeof(vector)); //temp will be added to shift_vector
+	
+	int i;//counter
+	
+	room_shift_vector->v[0] = (float)((before->x)-(after->x));
+	room_shift_vector->v[0] = (float)((before->y)-(after->y));
+	room_shift_vector->v[0] = (before->theta)-(after->theta);
+	
+	//add room_shift_vector to shift vector
+	AddVectors(shift_vector, &room_shift_vector, &working_vector);//did i do the pointers right here?
+	
+	for(i=0; i<3; i++){//copy results
+		*shift_vector->v[i] = working_vector->v[i];
+	}
+	
+	free(room_shift_vector);
+	free(working_vector);
+	
+	
+	float rot_theta = theta_cor[s->room - 2];//is this the best way to do this? might be better to use initial ns theta from each room to calirate on the fly
+	
+	//overwrite rotation_matrix
+	rotation_matrix->v[0][0] = cos(rot_theta);
+	rotation_matrix->v[0][1] = -1.0 * sin(rot_theta);
+	rotation_matrix->v[0][2] = 0.0;
+	
+	rotation_matrix->v[1][0] = sin(rot_theta);
+	rotation_matrix->v[1][1] = cos(rot_theta);
+	rotation_matrix->v[1][2] = 0.0;
+	
+	rotation_matrix->v[2][0] = 0.0;
+	rotation_matrix->v[2][1] = 0.0;
+	rotation_matrix->v[2][2] = 1.0;
+}
 
 // Setup the transformation matrices with values stored in NS stance s
 void setup_NS_transforms(ns_stance *s) {
@@ -119,6 +156,8 @@ void transform_NS(ns_stance *s, vector *ns){
 	//diagnostic
 	//printf("Scaling Result = ");
 	//PrintVector(ns);
+	//free(&working_vector);
+	//free(&working_vector_2);
 }
 
 // Print out a northstar stance structure
