@@ -23,7 +23,7 @@
 
 /* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
-robot_stance *initial, *current, *previous, *room_change;
+robot_stance *initial, *current, *previous, *last_room;
 kalmanFilter *kfilter;
 //int kalman_count = 0;
 float *track;
@@ -161,7 +161,7 @@ void init_pos(robot_if_t *ri){
 	initial = create_stance();
 	current = create_stance();
 	previous = create_stance();
-	room_change = create_stance();
+	last_room = create_stance();
 	
 	// Get Initial position
 	get_stance(initial, ri);
@@ -221,15 +221,15 @@ void get_Position(robot_if_t *ri, vector *loc){
 }
 
 void room_change_check(robot_stance *cur, robot_stance *prev){
-	// store previous data into room_change if room id changes
+	// store previous data into last_room if room id changes
 	printf("current room = %d, previous room = %d\n ", cur->ns->room, prev->ns->room);
 	
 	if (cur->ns->room != prev->ns->room){
-		copy_stance(prev, room_change);
+		copy_stance(prev, last_room);
 		printf("\n\n---------------------Room change-------------------\n\n");
-		printf("Room Change Results: %f, %f, %f, %f, %f, %f\n", room_change->nsTranslated->v[0], room_change->nsTranslated->v[1],
-		room_change->nsTranslated->v[2], room_change->weTranslated->v[0], room_change->weTranslated->v[1],
-		room_change->weTranslated->v[2]);
+		printf("Room Change Results: %f, %f, %f, %f, %f, %f\n", last_room->nsTranslated->v[0], last_room->nsTranslated->v[1],
+		last_room->nsTranslated->v[2], last_room->weTranslated->v[0], last_room->weTranslated->v[1],
+		last_room->weTranslated->v[2]);
 	}
 }
 
