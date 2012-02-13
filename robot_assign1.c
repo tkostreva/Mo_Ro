@@ -60,6 +60,44 @@ void SetSampleTime(int NewSampleTime) {
 	}
 }
 
+float get_euclidian_distance(int start_x, int start_y, int end_x, int end_y){
+ 	return sqrt( (float)( pow((start_x-end_x),2) + pow((start_y-end_y),2) ) );//check me
+}
+
+float get_theta_to_target(){//current_theta-get_theta_to_target() = theta to correct
+ float theta_to_target = arctan( ((float)(start_y-end_y)) / ((float)(end_x-start_x)));
+ if(end_x<start_x){//its gonna be outside of the range of arctan
+   if(end_y>start_y)
+     theta_to_target = PI - theta_to_target;//turn right > pi/2
+   else if(start_y>end_y)
+     theta_to_target = PI + theta_to_target;//turn left >pi/2
+   else//it needs to make a 180
+     theta_to_target = PI;//180 degrees
+ }
+}
+char go_to_position(int end_x, int end_y, float end_theta, float tolerance){//returns boolean to say if it made it
+ int start_x, start_y, current_x, current_y;
+ float start_theta, current_theta, distance_to_target;
+
+ //initialize start_x, start_y, start_theta
+
+
+ while( (distance_to_target = get_euclidian_distance(current_x,
+current_y, end_x, end_y) ) > tolerance){
+   //point robot at destination using PID
+
+   //move and close gap to target using PID
+
+   //find currentx and current y and current theta
+
+   //refresh current_x = ....
+ }
+
+
+ //point robot to end theta using PID
+}
+
+
 /* Not functional, would like to add it for awareness of battery levels */
 void battery_check( robot_if_t *ri ) {
 	if( ri_getBattery(ri) > RI_ROBOT_BATTERY_HOME ) {
