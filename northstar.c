@@ -26,27 +26,23 @@ void get_ns(ns_stance *s, robot_if_t *ri ) {
 }
 //updates ns transform vecotrs to be accurate after a room change
 void update_NS_transforms_after_room_change(ns_stance *before, ns_stance *after){
-	vector working_vector = calloc(1, sizeof(vector)); //temp
-	vector room_shift_vector = calloc(1, sizeof(vector)); //temp will be added to shift_vector
-	
+	vector working_vector; //temp
+	vector room_shift_vector; //temp will be added to shift_vector
+	float rot_theta;
 	int i;//counter
 	
-	room_shift_vector->v[0] = (float)((before->x)-(after->x));
-	room_shift_vector->v[0] = (float)((before->y)-(after->y));
-	room_shift_vector->v[0] = (before->theta)-(after->theta);
+	room_shift_vector.v[0] = (float)((before->x)-(after->x));
+	room_shift_vector.v[1] = (float)((before->y)-(after->y));
+	room_shift_vector.v[2] = (before->theta)-(after->theta);
 	
 	//add room_shift_vector to shift vector
 	AddVectors(shift_vector, &room_shift_vector, &working_vector);//did i do the pointers right here?
 	
 	for(i=0; i<3; i++){//copy results
-		*shift_vector->v[i] = working_vector->v[i];
+		shift_vector->v[i] = working_vector.v[i];
 	}
-	
-	free(room_shift_vector);
-	free(working_vector);
-	
-	
-	float rot_theta = theta_cor[s->room - 2];//is this the best way to do this? might be better to use initial ns theta from each room to calirate on the fly
+		
+	rot_theta = theta_cor[after->room - 2];//is this the best way to do this? might be better to use initial ns theta from each room to calirate on the fly
 	
 	//overwrite rotation_matrix
 	rotation_matrix->v[0][0] = cos(rot_theta);
