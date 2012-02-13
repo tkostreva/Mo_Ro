@@ -2,15 +2,67 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <math.h>
 #include "position.h"
 
-// Set DATA_COLLECT to 1 to dump data for csv files
+// Set DATA_COLLECT to 1 supress normal output and dump data for csv files
 #define DATA_COLLECT 1
 
+/*working variables*/
+struct timespec *lastTime;
+struct timespec *now;
+double kp, ki, kd;
+int SampleTime = 500000; // timespec has resolution of nanoseconds --> 0.5e6 ns
 
+double Compute(double Input, double Setpoint) {
+	static double errSum;
+	static double lastErr;
+	double 	error,
+		dErr;
+	int 	timeChange;
+	
+	clock_gettime(CLOCK_REALTIME, now);
+   
+	timeChange = (now->tv_sec - lastTime->tv_sec) * 1000000 + (now->tv_usec - lastTime->tv_usec);
+	
+	if(timeChange>=SampleTime) {
+		/*Compute all the working error variables*/
+		error = Setpoint - Input;
+		errSum += error;
+		dErr = (error - lastErr);
+ 
+		/*Compute PID Output*/
+		Output = kp * error + ki * errSum + kd * dErr;
+ 
+		/*Remember some variables for next time*/
+		lastErr = error;
+		lastTime->tv_sec = now->tv_sec;
+		lastTime->tv_usec = now->tv_usec;
+	}
+}
+
+// Set tunable proportionality constants
+void SetTunings(double Kp, double Ki, double Kd) {
+	double SampleTimeInSec = ((double)SampleTime)/1000000;
+	kp = Kp;
+	ki = Ki * SampleTimeInSec;
+	kd = Kd / SampleTimeInSec;
+}
+
+// Change Sample Time
+void SetSampleTime(int NewSampleTime) {
+	double ratio;
+  
+	if (NewSampleTime > 0) {
+		ratio  = (double)NewSampleTime / (double)SampleTime;
+		ki *= ratio;
+		kd /= ratio;
+		SampleTime = (unsigned long)NewSampleTime;
+	}
+}
+
+/* Not functional, would like to add it for awareness of battery levels */
 void battery_check( robot_if_t *ri ) {
-	if( ri_getBattery(ri) > RI_ROBOT_BATTERY_OFF ) {
+	if( ri_getBattery(ri) > RI_ROBOT_BATTERY_HOME ) {
 		printf("Charge me please!!!");
 		exit(11);
 	}	
@@ -20,20 +72,19 @@ int main(int argv, char **argc) {
 	//int i;
 	robot_if_t ri;
 	vector *location = (vector *)calloc(1, sizeof(vector));
-	float target_dist;
+	float target_x,
+	      target_y;
+	
+	// initialize memory for timing of the PID controller
+	lastTime = malloc(sizeof(timespec));
+	now = malloc(sizeof(timespec));
 	
         // Make sure we have a valid command line argument
-        if(argv <= 1) {
-                printf("Usage: robot_test <address of robot> <distance to travel in cm>\n");
+        if(argv <= 3) {
+                printf("Usage: robot_test <address of robot> <distance to travel in X in cm> <distance to travel in Y in cm>\n");
                 exit(-1);
         }
-
-	// Make sure we have a valid command line argument
-        if(argv <= 2) {
-                printf("Usage: robot_test <address of robot> <distance to travel in cm>\n");
-                exit(-1);
-        }
-
+        
         // Setup the robot with the address passed in
         if(ri_setup(&ri, argc[1], 0))
                 printf("Failed to setup the robot!\n");
@@ -42,7 +93,8 @@ int main(int argv, char **argc) {
 	battery_check(&ri);
 
 	// Retrieve target distance from command line
-	target_dist = (float) atoi(argc[2]);
+	target_X = (float) atoi(argc[2]);
+	target_Y = (float) atoi(argc[3]);
 			
 	// Retrieve initial position, initailize current and last
 	init_pos(&ri);
@@ -50,6 +102,7 @@ int main(int argv, char **argc) {
 #if (DATA_COLLECT)
 	print_stance_csv();
 #endif
+	
         // Action loop
         do {
                 // Move forward unless there's something in front of the robot
@@ -84,6 +137,8 @@ int main(int argv, char **argc) {
         } while(location->v[0] < target_dist);
 
 	free(location);
+	free(lastTime);
+	free(now);
 	
 	exit_pos();
 	

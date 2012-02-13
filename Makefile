@@ -39,3 +39,4 @@ clean:
 	rm -rf *.o
 	rm -rf *~
 	rm -rf robot
+	rm -rf cal
