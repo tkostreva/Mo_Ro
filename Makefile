@@ -1,6 +1,6 @@
 CFLAGS=-ggdb -g3 -Wall
 LIB_FLAGS=-L. -lrobot_if
-LIB_LINK=-lhighgui -lcv -lcxcore -lm -lgslcblas -L/usr/lib64/atlas -lclapack
+LIB_LINK=-lhighgui -lcv -lcxcore -lm -lgslcblas -L/usr/lib64/atlas -lclapack -lrt
 
 all: robot
 
