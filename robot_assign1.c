@@ -6,7 +6,7 @@
 #include "position.h"
 
 // Set DATA_COLLECT to 1 to dump data for csv files
-#define DATA_COLLECT 0
+#define DATA_COLLECT 1
 
 
 void battery_check( robot_if_t *ri ) {
@@ -17,7 +17,7 @@ void battery_check( robot_if_t *ri ) {
 }
 
 int main(int argv, char **argc) {
-	int i;
+	//int i;
 	robot_if_t ri;
 	vector *location = (vector *)calloc(1, sizeof(vector));
 	float target_dist;
