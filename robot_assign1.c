@@ -60,41 +60,50 @@ void SetSampleTime(int NewSampleTime) {
 	}
 }
 
-float get_euclidian_distance(int start_x, int start_y, int end_x, int end_y){
+float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){
  	return sqrt( (float)( pow((start_x-end_x),2) + pow((start_y-end_y),2) ) );//check me
 }
 
 float get_theta_to_target(){//current_theta-get_theta_to_target() = theta to correct
- float theta_to_target = arctan( ((float)(start_y-end_y)) / ((float)(end_x-start_x)));
- if(end_x<start_x){//its gonna be outside of the range of arctan
-   if(end_y>start_y)
-     theta_to_target = PI - theta_to_target;//turn right > pi/2
-   else if(start_y>end_y)
-     theta_to_target = PI + theta_to_target;//turn left >pi/2
-   else//it needs to make a 180
-     theta_to_target = PI;//180 degrees
- }
+ 	float theta_to_target = arctan( ((float)(start_y-end_y)) / ((float)(end_x-start_x)));
+ 	if(end_x<start_x){//its gonna be outside of the range of arctan
+   		if(end_y>start_y)
+     			theta_to_target = PI - theta_to_target;//turn right > pi/2
+   		else if(start_y>end_y)
+    			theta_to_target = PI + theta_to_target;//turn left >pi/2
+   		else//it needs to make a 180
+     			theta_to_target = PI;//180 degrees
+ 	}
 }
-char go_to_position(int end_x, int end_y, float end_theta, float tolerance){//returns boolean to say if it made it
- int start_x, start_y, current_x, current_y;
- float start_theta, current_theta, distance_to_target;
+char go_to_position(robot_if_t *ri, float end_x, float end_y, float end_theta, float tolerance){//returns boolean to say if it made it
+ 	float start_theta, distance_to_target, start_x, start_y, current_x, current_y, current_theta;
+	vector *current_location = (vector *)calloc(1, sizeof(vector));
+ 	
+ 	//initialize start_x, start_y, start_theta
+	get_Position(&ri, current_location);
+	start_x = current_location->v[0];
+	start_y = current_location->v[1];
+	start_theta = current_location->v[2];
+	
+ 	while( (distance_to_target = get_euclidian_distance(current_x, current_y, end_x, end_y) ) > tolerance){
+   	
+   		//point robot at destination using PID //code me
 
- //initialize start_x, start_y, start_theta
-
-
- while( (distance_to_target = get_euclidian_distance(current_x,
-current_y, end_x, end_y) ) > tolerance){
-   //point robot at destination using PID
-
-   //move and close gap to target using PID
-
-   //find currentx and current y and current theta
-
-   //refresh current_x = ....
- }
+  		//move and close gap to target using PID //code me
 
 
- //point robot to end theta using PID
+   		//refresh current position values
+   		get_Position(&ri, current_location);
+   		current_x = current_location->v[0];
+		current_y = current_location->v[1];
+		current_theta = current_location->v[2];
+   		
+ 	}
+
+
+ 	//point robot to end theta using PID //code me
+ 	free(current_location);
+ 	return (char)1;
 }
 
 
