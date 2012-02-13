@@ -14,7 +14,7 @@ theta_cal.o: theta_cal.c position.o matvec.o
 	gcc ${CFLAGS} -c theta_cal.c
 
 robot_assign1.o: robot_assign1.c position.o matvec.o
-	gcc ${CFLAGS} -c robot_assign1.c
+	gcc ${CFLAGS} -c robot_assign1.c -lrt
 
 position.o: position.c northstar.o wheel_encoder.o matvec.o rovioKalmanFilter.o
 	gcc ${CFLAGS} -c position.c
@@ -33,7 +33,6 @@ matvec.o: matvec.c
 
 rovioKalmanFilter.o: rovioKalmanFilter.c
 	gcc ${CFLAGS} -c rovioKalmanFilter.c
-
 
 clean:
 	rm -rf *.o
