@@ -194,7 +194,7 @@ void get_Position(robot_if_t *ri, vector *loc){
 	get_stance(current, ri);
 	
 	// check for room change
-	room_change_check(ri, current, previous);
+	room_change_check(ri);
 	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
@@ -220,19 +220,21 @@ void get_Position(robot_if_t *ri, vector *loc){
 	loc->v[2] = track[2];
 }
 
-void room_change_check(robot_if_t *ri, robot_stance *cur, robot_stance *prev){
+void room_change_check(robot_if_t *ri){
 	// store previous data into last_room if room id changes
 	
 	
-	if (cur->ns->room != prev->ns->room){
-		copy_stance(prev, last_room);
+	if (current->ns->room != previous->ns->room){
+		copy_stance(previous, last_room);
+		
 		printf("\n\n---------------------Room change-------------------\n\n");
-		printf("current room = %d, previous room = %d\n ", cur->ns->room, prev->ns->room);
-		printf("Room Change Results: %f, %f, %f, %f, %f, %f\n", last_room->nsTranslated->v[0], last_room->nsTranslated->v[1],
+		printf("current room = %d, previous room = %d\n ", current->ns->room, previous->ns->room);
+		printf("Room Change Results: %f, %f, %f, %f, %f, %f\n", last_room->nsTranslated->v[0], last_room->nsTranslated->v[1],		
 		last_room->nsTranslated->v[2], last_room->weTranslated->v[0], last_room->weTranslated->v[1],
 		last_room->weTranslated->v[2]);//does this really matter?  wheel encoders are uneffected by room changes you motherfuckers. 
+		
 		filter_flush(ri);//flush fliters for new room
-		update_NS_transforms_after_room_change(last_room->ns_f, cur->ns_f);//use untranslated, filtered ns stances to contrast here. 		
+		update_NS_transforms_after_room_change(last_room->ns_f, current->ns_f);//use untranslated, filtered ns stances to contrast here. 		
 	}
 }
 
