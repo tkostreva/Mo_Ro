@@ -28,6 +28,9 @@ wheel_encoder.o: wheel_encoder.c matvec.o
 filter.o: filter.c
 	gcc ${CFLAGS} -c filter.c
 
+PID_Control.o: PID_Control.c
+	gcc ${CFLAGS} -c PID_Control.c
+
 matvec.o: matvec.c
 	gcc ${CFLAGS} -c matvec.c
 

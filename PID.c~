@@ -1,0 +1,57 @@
+#include <PID.h>
+
+/*working variables*/
+struct timespec *lastTime;
+struct timespec *now;
+double kp, ki, kd;
+int SampleTime = 500000000; // timespec has resolution of nanoseconds --> 0.5e9 ns
+		
+double Compute(double Input, double Setpoint) {
+	static double errSum;
+	static double lastErr;
+	double 	error,
+		dErr,
+		Output;
+	int 	timeChange;
+	
+	clock_gettime(CLOCK_REALTIME, now);
+   
+	timeChange = (now->tv_sec - lastTime->tv_sec) * 1000000000 + (now->tv_nsec - lastTime->tv_nsec);
+	
+	if(timeChange>=SampleTime) {
+		/*Compute all the working error variables*/
+		error = Setpoint - Input;
+		errSum += error;
+		dErr = (error - lastErr);
+ 
+		/*Compute PID Output*/
+		Output = kp * error + ki * errSum + kd * dErr;
+ 
+		/*Remember some variables for next time*/
+		lastErr = error;
+		lastTime->tv_sec = now->tv_sec;
+		lastTime->tv_nsec = now->tv_nsec;		
+	}
+	
+	return Output;
+}
+
+// Set tunable proportionality constants
+void SetTunings(double Kp, double Ki, double Kd) {
+	double SampleTimeInSec = ((double)SampleTime)/1000000000;
+	kp = Kp;
+	ki = Ki * SampleTimeInSec;
+	kd = Kd / SampleTimeInSec;
+}
+
+// Change Sample Time
+void SetSampleTime(int NewSampleTime) {
+	double ratio;
+  
+	if (NewSampleTime > 0) {
+		ratio  = (double)NewSampleTime / (double)SampleTime;
+		ki *= ratio;
+		kd /= ratio;
+		SampleTime = (unsigned long)NewSampleTime;
+	}
+}
