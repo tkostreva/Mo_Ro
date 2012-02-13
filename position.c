@@ -229,9 +229,8 @@ void room_change_check(robot_if_t *ri){
 		
 		printf("\n\n---------------------Room change-------------------\n\n");
 		printf("current room = %d, previous room = %d\n ", current->ns->room, previous->ns->room);
-		printf("Room Change Results: %f, %f, %f, %f, %f, %f\n", last_room->nsTranslated->v[0], last_room->nsTranslated->v[1],		
-		last_room->nsTranslated->v[2], last_room->weTranslated->v[0], last_room->weTranslated->v[1],
-		last_room->weTranslated->v[2]);//does this really matter?  wheel encoders are uneffected by room changes you motherfuckers. 
+		printf("previous room filtered: %d, %d, %f, %d\n ", previous->ns_f->x, previous->ns_f->y, previous->ns_f->theta, previous->ns_f->sig);
+		printf("current room filtered: %d, %d, %f, %d\n", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
 		
 		filter_flush(ri);//flush fliters for new room
 		update_NS_transforms_after_room_change(last_room->ns_f, current->ns_f);//use untranslated, filtered ns stances to contrast here. 		
