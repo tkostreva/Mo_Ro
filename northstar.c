@@ -136,17 +136,15 @@ void transform_NS(ns_stance *s, vector *ns){
 	
 	//scale
 	// Update Scaling Matrix based on current signal strength
-#if 0
-	if(s->sig > 13000) {
+
+	if(s->sig > 15000) {
 		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
 		scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
 	}
 	else {  // currently keeping scaling factor at 45 per cm when signal strength is high and scaling down to 60 per cm when signal strength is low
-		  scale_matrix->v[0][0] = 1.0 / ( -0.001875 * s->sig + 69.375 );
-		  scale_matrix->v[1][1] = 1.0 / ( -0.001875 * s->sig + 69.375 );
-		  // possibly scale X and Y seperately?
+		  scale_matrix->v[0][0] = 1.0 / ( 0.001875 * s->sig + 16.0742 );
+		  scale_matrix->v[1][1] = 1.0 / ( -0.0048 * s->sig + 84.6228 );		  
 	}
-#endif
 	
 	MultMatVec(scale_matrix, &working_vector_2, ns);
 	//diagnostic

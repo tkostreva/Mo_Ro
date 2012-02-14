@@ -90,8 +90,8 @@ void turn_to(){
 	float d_theta;
 	
 	d_theta = delta_theta(current->kalmanFiltered->v[2], previous->kalmanFiltered->v[2]);
-	printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
-	        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
+	//printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
+	//        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
 	//return d_theta;
 }
 
@@ -189,7 +189,7 @@ void init_pos(robot_if_t *ri){
 	
 	// Setup Northstar Transform matrices based on intial position
 	setup_NS_transforms(initial->ns_f);
-	printf("Initial Kalman Theta = %f \n", initial->kalmanFiltered->v[2]);
+	//printf("Initial Kalman Theta = %f \n", initial->kalmanFiltered->v[2]);
 	
 	// Copy Initial into current and previous to initialize them
 	copy_stance(initial, current);
@@ -219,7 +219,7 @@ void get_Position(robot_if_t *ri, vector *loc){
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
 	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
-#if (DATA_COLLECT)	
+#if (!DATA_COLLECT)	
 	//diagnostic
 	printf("NS Translation Result = ");
 	PrintVector(current->nsTranslated);
