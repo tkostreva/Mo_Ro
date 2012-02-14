@@ -160,8 +160,12 @@ int main(int argv, char **argc) {
 			}
 		}
 		else {
-			//printf("I found an obstacle!  Stopping!\n\n");
-			break;
+			printf("I found an obstacle!  Turning Right!\n\n");
+			while(ri_IR_Detected(&ri)){
+				ri_move(&ri, RI_TURN_RIGHT, 6);
+				ri_move(&ri, RI_MOVE_FORWARD, 5);
+				update_theta("Right");
+			}
 		}
 		
 					

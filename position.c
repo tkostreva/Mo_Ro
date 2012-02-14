@@ -232,13 +232,11 @@ void room_change(robot_if_t *ri){
 	// store previous data into last if room id changes
 	filter_flush(ri);//flush fliters for new room
 	
-	/*
 	printf("\n\n---------------------Room change-------------------\n\n");
 	printf("current room = %d, previous room = %d\n ", current->ns->room, previous->ns->room);
 	printf("previous room position: %d, %d, %f, %d\n ", previous->ns_f->x, previous->ns_f->y, previous->ns_f->theta, previous->ns_f->sig);
 	printf("current room : %d, %d, %f, %d\n", current->ns_f->x, current->ns_f->y, current->ns_f->theta, current->ns_f->sig);
-	*/
-	
+		
 	setup_NS_transforms(current->ns_f);//use untranslated, filtered ns stance
 	
 	room_switch->v[0] = previous->nsTranslated->v[0];

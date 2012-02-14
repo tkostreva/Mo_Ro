@@ -91,7 +91,10 @@ void transform_NS(ns_stance *s, vector *ns){
 	ns->v[1] = (s->y);
 	ns->v[2] = (s->theta);
 	//PrintVector(ns);//diagnostic
-	
+	/*
+	MultMatVec(rotation_matrix, ns, &working_vector);//rotate
+	AddVectors(&working_vector, shift_vector, &working_vector_2);//shift
+	*/
 	//shift
 	AddVectors(ns, shift_vector, &working_vector);
 	//diagnostic
