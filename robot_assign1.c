@@ -76,6 +76,7 @@ void battery_check( robot_if_t *ri ) {
 
 int main(int argv, char **argc) {
 	//int i;
+	float d_theta;
 	robot_if_t ri;
 	vector *location = (vector *)calloc(1, sizeof(vector));
 	float target_x,
@@ -116,27 +117,54 @@ int main(int argv, char **argc) {
                 // Move forward unless there's something in front of the robot
                 if(!ri_IR_Detected(&ri)) {
 		// Bad attempt at PID
-		/*	// Straigten out robot if neccessary
-			if ( delta_theta() > 0.175 ) {
+			d_theta = turn_to();
+			//printf("Delta Theta = %f\n", d_theta);
+			
+			// Straigten out robot if neccessary
+			if ( d_theta > 0.07 ) {
 				ri_move(&ri, RI_TURN_RIGHT, 6);
-				ri_move(&ri, RI_MOVE_FWD_RIGHT, RI_SLOWEST);
+				//ri_move(&ri, RI_MOVE_FWD_RIGHT, RI_SLOWEST);
+				ri_move(&ri, RI_MOVE_FORWARD, 5);
+				printf("-----------------Robot Turning Right---------------------------\n");
+				/*while (1){
+					get_Position(&ri, location);
+					
+					//check right rotation
+					if (check_rotation(0) == 1)
+						break;
+					ri_move(&ri, RI_TURN_RIGHT, 6);
+					d_theta = turn_to();
+				}*/
+					
+				update_theta("Right");
 			}
-			else if ( delta_theta() < -0.175 ) {
+			else if ( d_theta < -0.07) {
 				ri_move(&ri, RI_TURN_LEFT, 6);
-				ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
+				//ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
+				ri_move(&ri, RI_MOVE_FORWARD, 5);
+				printf("-----------------Robot Turning Left---------------------------\n");
+				/*while (1){
+					get_Position(&ri, location);
+					
+					//check left rotation
+					if (check_rotation(1) == 1)
+						break;
+					ri_move(&ri, RI_TURN_LEFT, 6);
+					d_theta = turn_to();
+				}*/
+				update_theta("Left");
 			}
-			else {*/
-				turn_to();
+			else {
 				if(location->v[0] < 0.8 * scalar_target_dist) ri_move(&ri, RI_MOVE_FORWARD, RI_FASTEST);
 				else ri_move(&ri, RI_MOVE_FORWARD, RI_SLOWEST);
-		//	}
+			}
 		}
 		else {
 			//printf("I found an obstacle!  Stopping!\n\n");
 			break;
 		}
 		
-						
+					
 		get_Position(&ri, location);
 #if (DATA_COLLECT)
 		print_stance_csv();
