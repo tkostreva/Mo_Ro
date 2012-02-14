@@ -4,7 +4,6 @@
 #include <time.h>
 
 typedef struct _PID_ {
-	int 	SampleTime;
 	double	errSum,
 		lastErr,
 		kp,
@@ -14,7 +13,7 @@ typedef struct _PID_ {
 } PID;
 
 /* Set tunable proportionality constants */
-void SetTunings(PID *p, int InitialSampleTime, double Kp, double Ki, double Kd);
+void SetTunings(PID *p, double Kp, double Ki, double Kd);
 
 /* Compute output of PID control based on input and setpoint */
 double Compute(PID *p, double Input, double Setpoint);
