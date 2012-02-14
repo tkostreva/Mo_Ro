@@ -71,7 +71,7 @@ float delta_theta(float current_theta, float previous_theta) {
 	
 	// find delta theta and get it's absolute value
 	d_theta = current_theta - previous_theta;
-	if(d_theta < 0.0) d_theta *= -1.0;
+	//if(d_theta < 0.0) d_theta *= -1.0;
 	
 	// check to see if reported theta wrapped around
 	if(d_theta > M_PI){
@@ -86,13 +86,36 @@ float delta_theta(float current_theta, float previous_theta) {
 	return d_theta;	
 }
 
-void turn_to(){
+float turn_to(){
 	float d_theta;
 	
 	d_theta = delta_theta(current->kalmanFiltered->v[2], previous->kalmanFiltered->v[2]);
 	printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
 	        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
-	//return d_theta;
+	return d_theta;
+}
+
+/*int check_rotation(int rot){
+	//check for right rotation
+	if (rot == 0){
+		if (current->kalmanFiltered->v[2] < previous->kalmanFiltered->v[2])
+			return 1;
+		else
+			return 0;
+	}
+	else{
+		if (current->kalmanFiltered->v[2] > previous->kalmanFiltered->v[2])
+			return 1;
+		else
+			return 0;
+		
+	}
+	
+}*/
+void update_theta(char *s){
+	//update previous kalman filter theta data
+	previous->kalmanFiltered->v[2] = current->kalmanFiltered->v[2];
+	//printf("-----------------Robot Turning %s---------------------------\n",s);
 }
 
 // Create a Robot Stance structure and allocate memory for pointers
@@ -144,10 +167,9 @@ void copy_stance(robot_stance *original, robot_stance *copy){
 	copy->weTranslated->v[1] = original->weTranslated->v[1];
 	copy->weTranslated->v[2] = original->weTranslated->v[2];
 	
-	// deep copy kalman filtered data
+	// deep copy kalman filtered X and Y data
 	copy->kalmanFiltered->v[0] = original->kalmanFiltered->v[0];
 	copy->kalmanFiltered->v[1] = original->kalmanFiltered->v[1];
-	copy->kalmanFiltered->v[2] = original->kalmanFiltered->v[2];
 }
 
 void free_stance(robot_stance *s){

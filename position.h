@@ -27,10 +27,14 @@ typedef struct _robot_stance_ {
 // I think we need to define this based on matlab results... of the Filter Talked about on Wednesday 1/18
 #define NORTHSTAR_UNRELIABLE_STRENGTH RI_ROBOT_NAV_SIGNAL_WEAK
 
+//int check_rotation(int rot);
+
+void update_theta(char *s);
+
 robot_stance *create_stance();
 void get_kalman_filter_data(vector *kf_data);
 
-void turn_to();
+float turn_to();
 
 float delta_theta(float current_theta, float previous_theta);
 
