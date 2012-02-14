@@ -229,8 +229,11 @@ void update_pos(robot_if_t *ri){
 }
 
 void room_change(robot_if_t *ri){
-	// store previous data into last if room id changes
-	filter_flush(ri);//flush fliters for new room
+	// flush fliters for new room
+	filter_flush(ri);
+	
+	// update current with new filter data
+	get_stance(current, ri);
 	
 	printf("\n\n---------------------Room change-------------------\n\n");
 	printf("current room = %d, previous room = %d\n ", current->ns->room, previous->ns->room);
