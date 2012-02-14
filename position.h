@@ -30,7 +30,9 @@ typedef struct _robot_stance_ {
 robot_stance *create_stance();
 void get_kalman_filter_data(vector *kf_data);
 
-float delta_theta();
+void turn_to();
+
+float delta_theta(float current_theta, float previous_theta);
 
 void init_pos(robot_if_t *ri);		//sets up initial coordinates
 

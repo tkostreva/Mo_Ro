@@ -86,8 +86,8 @@ int main(int argv, char **argc) {
 	      scalar_target_dist;
 	
 	// initialize memory for timing of the PID controller
-	lastTime = malloc(sizeof(struct timespec));
-	now = malloc(sizeof(struct timespec));
+	//lastTime = malloc(sizeof(struct timespec));
+	//now = malloc(sizeof(struct timespec));
 	
         // Make sure we have a valid command line argument
         if(argv <= 3) {
@@ -129,6 +129,7 @@ int main(int argv, char **argc) {
 				ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
 			}
 			else {*/
+				turn_to();
 				if(location->v[0] < 0.8 * scalar_target_dist) ri_move(&ri, RI_MOVE_FORWARD, RI_FASTEST);
 				else ri_move(&ri, RI_MOVE_FORWARD, RI_SLOWEST);
 		//	}
@@ -143,13 +144,14 @@ int main(int argv, char **argc) {
 #if (DATA_COLLECT)
 		print_stance_csv();
 #else
-		printf("Location:  X = %f cm\tY = %f cm\ttarget = %f\n", location->v[0], location->v[1], target_x);
+		//printf("Location:  X = %f cm\tY = %f cm\ttarget = %f\n", location->v[0], location->v[1], target_x);
+		printf("Kalmann filtered result = %f\t%f\t%f\n", location->v[0], location->v[1], location->v[2]);
 #endif
         } while(location->v[0] < target_x);
 
 	free(location);
-	free(lastTime);
-	free(now);
+	//free(lastTime);
+	//free(now);
 	
 	exit_pos();
 	

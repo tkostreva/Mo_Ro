@@ -65,18 +65,18 @@ void get_filtered(robot_stance *s, robot_if_t *ri){
 }
 
 // use this to report ACTUAL difference between last theta and current theta ( prevent wrap around )
-float delta_theta() {
+float delta_theta(float current_theta, float previous_theta) {
 	int sign;
 	float d_theta;
 	
 	// find delta theta and get it's absolute value
-	d_theta = current->ns->theta - previous->ns->theta;
+	d_theta = current_theta - previous_theta;
 	if(d_theta < 0.0) d_theta *= -1.0;
 	
 	// check to see if reported theta wrapped around
 	if(d_theta > M_PI){
 		// get sign of last theta to check direction of wrap
-		if(  previous->ns->theta < 0 ) sign = -1;
+		if(  previous_theta < 0 ) sign = -1;
 		else sign = 1;
 		
 		// correct change in theta by 2 * PI
@@ -84,6 +84,15 @@ float delta_theta() {
 	}
 	
 	return d_theta;	
+}
+
+void turn_to(){
+	float d_theta;
+	
+	d_theta = delta_theta(current->kalmanFiltered->v[2], previous->kalmanFiltered->v[2]);
+	printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
+	        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
+	//return d_theta;
 }
 
 // Create a Robot Stance structure and allocate memory for pointers
@@ -133,7 +142,12 @@ void copy_stance(robot_stance *original, robot_stance *copy){
 	// deep copy weTranslated
 	copy->weTranslated->v[0] = original->weTranslated->v[0];
 	copy->weTranslated->v[1] = original->weTranslated->v[1];
-	copy->weTranslated->v[2] = original->weTranslated->v[2];	
+	copy->weTranslated->v[2] = original->weTranslated->v[2];
+	
+	// deep copy kalman filtered data
+	copy->kalmanFiltered->v[0] = original->kalmanFiltered->v[0];
+	copy->kalmanFiltered->v[1] = original->kalmanFiltered->v[1];
+	copy->kalmanFiltered->v[2] = original->kalmanFiltered->v[2];
 }
 
 void free_stance(robot_stance *s){
@@ -190,10 +204,11 @@ void init_pos(robot_if_t *ri){
 }
 
 void get_Position(robot_if_t *ri, vector *loc){
-	float loc_wo_kalman[3];
+	//float loc_wo_kalman[3];
 	
 	// copy current stance into previous
 	copy_stance(current, previous);
+	
 	  
 	update_sensor_data(ri);
 	get_stance(current, ri);
@@ -234,7 +249,7 @@ void get_kalman_filter_data(vector *kf_data){
 	kf_data->v[1] = track[1];
 	kf_data->v[2] = track[2];
 	
-	printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);
+	//printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);
 	
 }
 
