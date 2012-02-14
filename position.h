@@ -21,12 +21,14 @@ typedef struct _robot_stance_ {
 	we_stance *we_f;	// Filtered Wheel Encoder Data
 	vector *nsTranslated;	// North Star Transformed position
 	vector *weTranslated;	// Wheel Encoder Transformed position
+	vector *kalmanFiltered; // Kalman Filtered Data
 } robot_stance;
 
 // I think we need to define this based on matlab results... of the Filter Talked about on Wednesday 1/18
 #define NORTHSTAR_UNRELIABLE_STRENGTH RI_ROBOT_NAV_SIGNAL_WEAK
 
 robot_stance *create_stance();
+void get_kalman_filter_data(vector *kf_data);
 
 float delta_theta();
 

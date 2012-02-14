@@ -26,7 +26,6 @@ filter *f[NUM_FILTERS];
 robot_stance *initial, *current, *previous, *last_room;
 kalmanFilter *kfilter;
 //int kalman_count = 0;
-float *track;
 
 // Update the robot's sensor information 
 void update_sensor_data( robot_if_t *ri ) {
@@ -99,6 +98,7 @@ robot_stance *create_stance(){
 	
 	rs->nsTranslated = (vector *)malloc(sizeof(vector));
 	rs->weTranslated = (vector *)malloc(sizeof(vector));
+	rs->kalmanFiltered = (vector *)malloc(sizeof(vector));
 	
 	return rs;
 }
@@ -146,7 +146,8 @@ void free_stance(robot_stance *s){
 
 void init_pos(robot_if_t *ri){
 	int i;
-	float vel[3] = { 350.0/54.0, 5.0, 0 };
+	//float vel[3] = { 350.0/54.0, 0, 0 };
+	float vel[3] = {35, 0, 0 };
 	float pos[3] = {0, 0, 0};
 	int deltaT = 1;
 	// Get initial Northstar position
@@ -174,7 +175,7 @@ void init_pos(robot_if_t *ri){
 	
 	// Setup Northstar Transform matrices based on intial position
 	setup_NS_transforms(initial->ns_f);
-	
+	printf("Initial Kalman Theta = %f \n", initial->kalmanFiltered->v[2]);
 	
 	// Copy Initial into current and previous to initialize them
 	copy_stance(initial, current);
@@ -182,11 +183,15 @@ void init_pos(robot_if_t *ri){
 	
 	// allocate memory for kalmanfilter
 	kfilter = (kalmanFilter *) calloc(1, sizeof(kalmanFilter));
-	track = (float *) malloc(9*sizeof(float));
+	//track = (float *) malloc(9*sizeof(float));
 	initKalmanFilter(kfilter, pos, vel, deltaT);
+	
+	
 }
 
 void get_Position(robot_if_t *ri, vector *loc){
+	float loc_wo_kalman[3];
+	
 	// copy current stance into previous
 	copy_stance(current, previous);
 	  
@@ -200,24 +205,37 @@ void get_Position(robot_if_t *ri, vector *loc){
 	transform_NS(current->ns_f, current->nsTranslated);
 	
 	//diagnostic
-	printf("NS Translation Result = ");
-	PrintVector(current->nsTranslated);
+	//printf("NS Translation Result = ");
+	//PrintVector(current->nsTranslated);
 	
 	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
 	//diagnostic
-	printf("WE Translation Result = ");
-	PrintVector(current->weTranslated);
-	/*  Old average of both transforms
-	loc->v[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
-	loc->v[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
-	loc->v[2] = current->nsTranslated->v[2];
+	//printf("WE Translation Result = ");
+	//PrintVector(current->weTranslated);
+	//  Old average of both transforms
+	/*loc_wo_kalman[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
+	loc_wo_kalman[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
+	loc_wo_kalman[2] = current->nsTranslated->v[2];
+	printf("Location without Kalmann results = %f\t%f\t%f\n", loc_wo_kalman[0],loc_wo_kalman[1],loc_wo_kalman[2]);
 	*/
-	rovioKalmanFilter(kfilter, current->nsTranslated->v, current->weTranslated->v, track);
+	//get kalman filtered data
+	get_kalman_filter_data(current->kalmanFiltered);
+	loc->v[0] = current->kalmanFiltered->v[0];
+	loc->v[1] = current->kalmanFiltered->v[1];
+	loc->v[2] = current->kalmanFiltered->v[2];
 	
-	//printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);
-	loc->v[0] = track[0];
-	loc->v[1] = track[1];
-	loc->v[2] = track[2];
+}
+//get kalman filtered data
+void get_kalman_filter_data(vector *kf_data){
+	float track[9];
+	
+	rovioKalmanFilter(kfilter, current->nsTranslated->v, current->weTranslated->v, track);
+	kf_data->v[0] = track[0];
+	kf_data->v[1] = track[1];
+	kf_data->v[2] = track[2];
+	
+	printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);
+	
 }
 
 void room_change_check(robot_if_t *ri){

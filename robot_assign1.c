@@ -6,7 +6,7 @@
 #include "position.h"
 
 // Set DATA_COLLECT to 1 supress normal output and dump data for csv files
-#define DATA_COLLECT 1
+#define DATA_COLLECT 0
 
 /*working variables*/
 struct timespec *lastTime;
@@ -184,7 +184,7 @@ int main(int argv, char **argc) {
 				ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
 			}
 			else {*/
-				if(location->v[1] < 0.8 * scalar_target_dist) ri_move(&ri, RI_MOVE_FORWARD, RI_FASTEST);
+				if(location->v[0] < 0.8 * scalar_target_dist) ri_move(&ri, RI_MOVE_FORWARD, RI_FASTEST);
 				else ri_move(&ri, RI_MOVE_FORWARD, RI_SLOWEST);
 		//	}
 		}
@@ -198,7 +198,7 @@ int main(int argv, char **argc) {
 #if (DATA_COLLECT)
 		print_stance_csv();
 #else
-		printf("Location:  X = %f cm\tY = %f cm\n", location->v[0], location->v[1]);
+		printf("Location:  X = %f cm\tY = %f cm\ttarget = %f\n", location->v[0], location->v[1], target_x);
 #endif
         } while(location->v[0] < target_x);
 
