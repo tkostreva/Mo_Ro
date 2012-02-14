@@ -14,6 +14,9 @@
 #include "filter.h"
 #include "matvec.h"
 
+// Set DATA_COLLECT to 1 supress normal output and dump data for csv files
+#define DATA_COLLECT 1
+
 typedef struct _robot_stance_ {
 	ns_stance *ns;		// Raw North Star Data 
 	ns_stance *ns_f;	// Filtered North Star Data
@@ -23,9 +26,6 @@ typedef struct _robot_stance_ {
 	vector *weTranslated;	// Wheel Encoder Transformed position
 	vector *kalmanFiltered; // Kalman Filtered Data
 } robot_stance;
-
-// I think we need to define this based on matlab results... of the Filter Talked about on Wednesday 1/18
-#define NORTHSTAR_UNRELIABLE_STRENGTH RI_ROBOT_NAV_SIGNAL_WEAK
 
 robot_stance *create_stance();
 void get_kalman_filter_data(vector *kf_data);

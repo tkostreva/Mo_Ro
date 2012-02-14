@@ -218,15 +218,16 @@ void get_Position(robot_if_t *ri, vector *loc){
 	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
-	
-	//diagnostic
-	//printf("NS Translation Result = ");
-	//PrintVector(current->nsTranslated);
-	
 	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
+#if (DATA_COLLECT)	
 	//diagnostic
-	//printf("WE Translation Result = ");
-	//PrintVector(current->weTranslated);
+	printf("NS Translation Result = ");
+	PrintVector(current->nsTranslated);
+	
+	//diagnostic
+	printf("WE Translation Result = ");
+	PrintVector(current->weTranslated);
+#endif
 	//  Old average of both transforms
 	/*loc_wo_kalman[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc_wo_kalman[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;

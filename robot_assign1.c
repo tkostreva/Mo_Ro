@@ -6,9 +6,6 @@
 #include "position.h"
 #include "PID_Control.h"
 
-// Set DATA_COLLECT to 1 supress normal output and dump data for csv files
-#define DATA_COLLECT 0
-
 float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){
 	float	diff1,
 		diff2;
