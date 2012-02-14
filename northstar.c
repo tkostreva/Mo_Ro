@@ -46,10 +46,10 @@ void update_NS_transforms_after_room_change(ns_stance *before, ns_stance *after)
 	
 	//overwrite rotation_matrix
 	rotation_matrix->v[0][0] = cos(rot_theta);
-	rotation_matrix->v[0][1] = -1.0 * sin(rot_theta);
+	rotation_matrix->v[0][1] = sin(rot_theta);
 	rotation_matrix->v[0][2] = 0.0;
 	
-	rotation_matrix->v[1][0] = sin(rot_theta);
+	rotation_matrix->v[1][0] = -1.0 * sin(rot_theta);
 	rotation_matrix->v[1][1] = cos(rot_theta);
 	rotation_matrix->v[1][2] = 0.0;
 	
@@ -60,8 +60,8 @@ void update_NS_transforms_after_room_change(ns_stance *before, ns_stance *after)
 
 // Setup the transformation matrices with values stored in NS stance s
 void setup_NS_transforms(ns_stance *s) {
-	float rot_theta = theta_cor[s->room - 2];
-  
+	float rot_theta = theta_cor[(s->room - 2)];  // rotation theta is defined by theta correctection matrix, values defined during calibration
+	
 	// free pointers in case previously declared
 	free(shift_vector);
 	free(rotation_matrix);
@@ -85,16 +85,19 @@ void setup_NS_transforms(ns_stance *s) {
 	
 	//initialize rotation_matrix
 	rotation_matrix->v[0][0] = cos(rot_theta);
-	rotation_matrix->v[0][1] = -1.0 * sin(rot_theta);
+	rotation_matrix->v[0][1] = sin(rot_theta);
 	rotation_matrix->v[0][2] = 0.0;
 	
-	rotation_matrix->v[1][0] = sin(rot_theta);
+	rotation_matrix->v[1][0] = -1.0 * sin(rot_theta);
 	rotation_matrix->v[1][1] = cos(rot_theta);
 	rotation_matrix->v[1][2] = 0.0;
 	
 	rotation_matrix->v[2][0] = 0.0;
 	rotation_matrix->v[2][1] = 0.0;
 	rotation_matrix->v[2][2] = 1.0;
+	
+	//printf("Rotation Matrix = \n");
+	//PrintMatrix( rotation_matrix );
 	
 	//initialize scale_matrix
 	scale_matrix->v[0][0] = 1.0/NS_TICKS_PER_CM;
@@ -145,14 +148,11 @@ void transform_NS(ns_stance *s, vector *ns){
 		  scale_matrix->v[0][0] = 1.0 / ( 0.001875 * s->sig + 16.0742 );
 		  scale_matrix->v[1][1] = 1.0 / ( -0.0048 * s->sig + 84.6228 );		  
 	}
-
 	
 	MultMatVec(scale_matrix, &working_vector_2, ns);
 	//diagnostic
 	//printf("Scaling Result = ");
-	//PrintVector(ns);
-	//free(&working_vector);
-	//free(&working_vector_2);
+	//PrintVector(ns);	
 }
 
 // Print out a northstar stance structure
