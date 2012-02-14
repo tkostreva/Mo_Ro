@@ -90,6 +90,7 @@ float turn_to(){
 	float d_theta;
 	
 	d_theta = delta_theta(current->kalmanFiltered->v[2], previous->kalmanFiltered->v[2]);
+<<<<<<< HEAD
 	printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
 	        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
 	return d_theta;
@@ -116,6 +117,11 @@ void update_theta(char *s){
 	//update previous kalman filter theta data
 	previous->kalmanFiltered->v[2] = current->kalmanFiltered->v[2];
 	//printf("-----------------Robot Turning %s---------------------------\n",s);
+=======
+	//printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
+	//        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
+	//return d_theta;
+>>>>>>> 4aea995c7e38303a963747870207b3224547c1d4
 }
 
 // Create a Robot Stance structure and allocate memory for pointers
@@ -211,7 +217,7 @@ void init_pos(robot_if_t *ri){
 	
 	// Setup Northstar Transform matrices based on intial position
 	setup_NS_transforms(initial->ns_f);
-	printf("Initial Kalman Theta = %f \n", initial->kalmanFiltered->v[2]);
+	//printf("Initial Kalman Theta = %f \n", initial->kalmanFiltered->v[2]);
 	
 	// Copy Initial into current and previous to initialize them
 	copy_stance(initial, current);
@@ -220,9 +226,7 @@ void init_pos(robot_if_t *ri){
 	// allocate memory for kalmanfilter
 	kfilter = (kalmanFilter *) calloc(1, sizeof(kalmanFilter));
 	//track = (float *) malloc(9*sizeof(float));
-	initKalmanFilter(kfilter, pos, vel, deltaT);
-	
-	
+	initKalmanFilter(kfilter, pos, vel, deltaT);	
 }
 
 void get_Position(robot_if_t *ri, vector *loc){
@@ -240,15 +244,16 @@ void get_Position(robot_if_t *ri, vector *loc){
 	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
-	
-	//diagnostic
-	//printf("NS Translation Result = ");
-	//PrintVector(current->nsTranslated);
-	
 	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
+#if (!DATA_COLLECT)	
 	//diagnostic
-	//printf("WE Translation Result = ");
-	//PrintVector(current->weTranslated);
+	printf("NS Translation Result = ");
+	PrintVector(current->nsTranslated);
+	
+	//diagnostic
+	printf("WE Translation Result = ");
+	PrintVector(current->weTranslated);
+#endif
 	//  Old average of both transforms
 	/*loc_wo_kalman[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc_wo_kalman[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
@@ -290,6 +295,17 @@ void room_change_check(robot_if_t *ri){
 		filter_flush(ri);//flush fliters for new room
 		update_NS_transforms_after_room_change(last_room->ns_f, current->ns_f);//use untranslated, filtered ns stances to contrast here. 		
 	}
+}
+
+int NS_theta_cal(robot_if_t *ri, vector *u){
+	update_sensor_data(ri);
+	get_stance(current, ri);
+
+	u->v[0] = (float)current->ns_f->x;
+	u->v[1] = (float)current->ns_f->y;
+	u->v[2] = current->ns_f->theta;
+
+	return current->ns->room;
 }
 
 void print_stance_csv(){
