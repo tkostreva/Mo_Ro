@@ -145,6 +145,7 @@ void transform_NS(ns_stance *s, vector *ns){
 		  scale_matrix->v[0][0] = 1.0 / ( 0.001875 * s->sig + 16.0742 );
 		  scale_matrix->v[1][1] = 1.0 / ( -0.0048 * s->sig + 84.6228 );		  
 	}
+
 	
 	MultMatVec(scale_matrix, &working_vector_2, ns);
 	//diagnostic

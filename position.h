@@ -15,7 +15,7 @@
 #include "matvec.h"
 
 // Set DATA_COLLECT to 1 supress normal output and dump data for csv files
-#define DATA_COLLECT 1
+#define DATA_COLLECT 0
 
 typedef struct _robot_stance_ {
 	ns_stance *ns;		// Raw North Star Data 

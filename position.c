@@ -198,9 +198,7 @@ void init_pos(robot_if_t *ri){
 	// allocate memory for kalmanfilter
 	kfilter = (kalmanFilter *) calloc(1, sizeof(kalmanFilter));
 	//track = (float *) malloc(9*sizeof(float));
-	initKalmanFilter(kfilter, pos, vel, deltaT);
-	
-	
+	initKalmanFilter(kfilter, pos, vel, deltaT);	
 }
 
 void get_Position(robot_if_t *ri, vector *loc){
@@ -269,6 +267,17 @@ void room_change_check(robot_if_t *ri){
 		filter_flush(ri);//flush fliters for new room
 		update_NS_transforms_after_room_change(last_room->ns_f, current->ns_f);//use untranslated, filtered ns stances to contrast here. 		
 	}
+}
+
+int NS_theta_cal(robot_if_t *ri, vector *u){
+	update_sensor_data(ri);
+	get_stance(current, ri);
+
+	u->v[0] = (float)current->ns_f->x;
+	u->v[1] = (float)current->ns_f->y;
+	u->v[2] = current->ns_f->theta;
+
+	return current->ns->room;
 }
 
 void print_stance_csv(){

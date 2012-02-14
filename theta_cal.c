@@ -58,6 +58,11 @@ int main(int argv, char **argc) {
 		exit(1);
 	}
 	
+	printf("U = ");
+	PrintVector(u);
+	printf("W = ");
+	PrintVector(w);
+	
 	d_x = w->v[0] - u->v[0];
 	d_y = w->v[1] - u->v[1];
 	
