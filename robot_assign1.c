@@ -191,15 +191,15 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
-		/*
+		
 		if((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit)) {
 			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 			rotate_to_theta(ri, theta_target, current_location);
 			
 			/* reset PID control for rest of move */
-			/*reset_PID(fwdPID);
+			reset_PID(fwdPID);
 		}
-		*/
+		
 		//move to reduce error at fill speed, then using PID in final quarter
 		if( current_distance >= 0.25 * distance_to_target ) {
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
