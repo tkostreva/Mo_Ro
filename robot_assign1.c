@@ -11,9 +11,9 @@
 #define F_Kd 0.09
 #define F_Ki 0.01
 
-#define R_Kp 3.0
-#define R_Kd 0.3
-#define R_Ki 0.03
+#define R_Kp 0.5
+#define R_Kd 0.05
+#define R_Ki 0.005
 
 #define LANE_LIMIT 14.5  /* currently the radius of the bot in [cm] */
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
@@ -85,9 +85,8 @@ float get_theta_to_target(float start_x, float start_y, float end_x, float end_y
 }
 
 void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
-	float	rot_amount,
-		output,
-		test;
+	float	output,
+		tolerance;
 	int  	ang_vel;
 	vector *expected_vel;
 	
@@ -96,10 +95,8 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	
 	expected_vel = (vector *)calloc(1, sizeof(vector));
 	
-	rot_amount = target_theta - current_location->v[2];
-	
 	do {
-		 output = Compute(rotPID, current_location->v[2], rot_amount);
+		 output = Compute(rotPID, current_location->v[2], target_theta);
 		 printf("Rotate PID Output = %f\n", output);
 		 
 		 // correlate output to an angular velocity this is a crappy substitute
@@ -120,11 +117,13 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 			expected_vel->v[2] = -1 * rot_speed[ang_vel - 1];
 		 }
 		 
-		 get_Position(ri, current_location, expected_vel); 
+		 get_Position(ri, current_location, expected_vel);
+		 printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		 
-		 if(output < 0.0) test = -1.0 * output;
-		 else test = output;
-	} while (test > 10);  // once again, very very arbitrary
+		 tolerance = target_theta - current_location->v[2];
+		 if(tolerance < 0.0) tolerance *= -1.0;
+		 
+	} while (tolerance > 0.1);
 	
 	free(expected_vel);
 }
@@ -174,8 +173,6 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	x_i = current_location->v[0];
 	y_i = current_location->v[1];
 	
-	distance_to_target = get_euclidian_distance(x_i, y_i, end_x, end_y);
-	
 	// find initial theta to target in case we need to rotate immediately
 	theta_target = get_theta_to_target(x_i, y_i, end_x, end_y);
 	
@@ -189,17 +186,20 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	do {
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		
+		distance_to_target = current_distance + get_euclidian_distance(current_location->v[0],
+			current_location->v[1], end_x, end_y);
+		
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
-		/*
+		
 		if((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit)) {
 			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 			rotate_to_theta(ri, theta_target, current_location);
 			
 			/* reset PID control for rest of move */
-			/*reset_PID(fwdPID);
+			reset_PID(fwdPID);
 		}
-		*/
+		
 		//move to reduce error at fill speed, then using PID in final quarter
 		if( current_distance >= 0.25 * distance_to_target ) {
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
@@ -230,7 +230,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
    		//refresh current position values
    		get_Position(ri, current_location, expected_vel);
-		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
+		//printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
 		tolerance = distance_to_target - current_distance;
 		if(tolerance < 0) tolerance *= -1.0;
