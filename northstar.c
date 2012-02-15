@@ -107,7 +107,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	//scale
 	// Update Scaling Matrix based on current signal strength
 
-	if(s->sig > 15000) {
+	if(s->sig > 4000) {
 		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
 		scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
 	}
