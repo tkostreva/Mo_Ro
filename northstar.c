@@ -9,10 +9,10 @@ matrix *rotation_matrix;
 matrix *scale_matrix;
 
 float theta_cor[] = {
-	-0.559143, /*ROOM TWO THETA COR*/
-	 0.136328, /*ROOM THREE THETA COR*/
-	-1.545036, /*ROOM FOUR THETA COR*/
-	 0.052755  /*ROOM FIVE THETA COR*/
+	-0.246321, /*ROOM TWO THETA COR*/
+	-1.456696, /*ROOM THREE THETA COR*/
+	 0.035983, /*ROOM FOUR THETA COR*/
+	-1.502438  /*ROOM FIVE THETA COR*/
 };
 
 // Populate NorthStar Stance Object from sensor data
@@ -91,10 +91,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	ns->v[1] = (s->y);
 	ns->v[2] = (s->theta);
 	//PrintVector(ns);//diagnostic
-	/*
-	MultMatVec(rotation_matrix, ns, &working_vector);//rotate
-	AddVectors(&working_vector, shift_vector, &working_vector_2);//shift
-	*/
+	
 	//shift
 	AddVectors(ns, shift_vector, &working_vector);
 	//diagnostic

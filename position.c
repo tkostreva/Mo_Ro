@@ -248,7 +248,7 @@ void room_change(robot_if_t *ri){
 	room_switch->v[2] = previous->nsTranslated->v[2];
 }
 
-void get_Position(robot_if_t *ri, vector *loc){
+void get_Position(robot_if_t *ri, vector *loc, vector *vel){
 	//float loc_wo_kalman[3];
 		
 	// copy current stance into previous
@@ -274,7 +274,7 @@ void get_Position(robot_if_t *ri, vector *loc){
 	current->weTranslated->v[1] += last->kalmanFiltered->v[1];
 	current->weTranslated->v[2] += last->kalmanFiltered->v[2];
 	
-	#if (!DATA_COLLECT)	
+#if (!DATA_COLLECT)	
 	//diagnostic
 	printf("NS Translation Result = ");
 	PrintVector(current->nsTranslated);
@@ -290,6 +290,7 @@ void get_Position(robot_if_t *ri, vector *loc){
 	printf("Location without Kalmann results = %f\t%f\t%f\n", loc_wo_kalman[0],loc_wo_kalman[1],loc_wo_kalman[2]);
 	*/
 	//get kalman filtered data
+	rovioKalmanFilterSetVelocity(kfilter, vel->v); 
 	get_kalman_filter_data(current->kalmanFiltered);
 	
 	// Report kalman filtered values

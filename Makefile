@@ -7,8 +7,8 @@ all: robot
 cal: theta_cal.o northstar.o wheel_encoder.o filter.o position.o
 	gcc ${CFLAGS} -o cal theta_cal.o position.o northstar.o wheel_encoder.o filter.o matvec.o rovioKalmanFilter.o ${LIB_FLAGS} ${LIB_LINK}
 
-robot: robot_assign1.o northstar.o wheel_encoder.o filter.o position.o PID_Control.o
-	gcc ${CFLAGS} -o robot robot_assign1.o position.o northstar.o wheel_encoder.o filter.o matvec.o rovioKalmanFilter.o  ${LIB_FLAGS} ${LIB_LINK}
+robot: robot_assign1.o northstar.o wheel_encoder.o filter.o position.o rovioKalmanFilter.o PID_Control.o
+	gcc ${CFLAGS} -o robot robot_assign1.o position.o northstar.o wheel_encoder.o filter.o matvec.o rovioKalmanFilter.o PID_Control.o  ${LIB_FLAGS} ${LIB_LINK}
 
 theta_cal.o: theta_cal.c position.o matvec.o rovioKalmanFilter.o
 	gcc ${CFLAGS} -c theta_cal.c

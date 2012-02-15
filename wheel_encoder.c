@@ -40,7 +40,7 @@ float get_we_Theta(we_stance *s) {
 	
 	temp = s->back_delta / WE_TICKS_PER_CM;
 	
-	temp /= (M_PI * 29.0);
+	temp /= (2 * 12.5 * M_PI);
   
 	return temp;
 }

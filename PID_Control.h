@@ -15,6 +15,8 @@ typedef struct _PID_ {
 /* Set tunable proportionality constants */
 void SetTunings(PID *p, double Kp, double Ki, double Kd);
 
+void reset_PID(PID *p);
+
 /* Compute output of PID control based on input and setpoint */
 double Compute(PID *p, double Input, double Setpoint);
 

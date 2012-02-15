@@ -41,7 +41,8 @@ float delta_theta(float current_theta, float previous_theta);
 
 void init_pos(robot_if_t *ri);		//sets up initial coordinates
 
-void get_Position(robot_if_t *ri, vector *loc);
+/* get filtered data from NS and WE and filtered again with Kalman */
+void get_Position(robot_if_t *ri, vector *loc, vector *vel);
 
 int NS_theta_cal(robot_if_t *ri, vector *u);
 
