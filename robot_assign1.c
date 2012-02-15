@@ -172,6 +172,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
 		
 		if((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit)) {
+			printf("upper_limit = %f\t lower_limit = %f\n",upper_limit,lower_limit);
 			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 			rotate_to_theta(ri, theta_target, current_location);
 			
@@ -209,8 +210,10 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
    		//refresh current position values
    		get_Position(ri, current_location, expected_vel);
 		
-		//printf("Kalman Data = %f\t%f\t%f\n",current_location->v[0], current_location->v[1], output);
- 	} while( current_distance >= (distance_to_target) || output < 100  );  // chose a VERY ARBITRARY NUMBER FOR THE MOMENT
+		printf("Kalman Data = %f\t%f\tcurrent_distance = %f\n",current_location->v[0], current_location->v[1], current_distance);
+		printf("Excepted velcoities = %f\t%f\n", expected_vel->v[0], expected_vel->v[1]);
+ 	}while( output < 1000  );  // chose a VERY ARBITRARY NUMBER FOR THE MOMENT 
+ 	//while( current_distance > (0.05 * distance_to_target) || output < 400  );  // chose a VERY ARBITRARY NUMBER FOR THE MOMENT
 
  	//point robot to end theta using PID //code me
  	free(current_location);
