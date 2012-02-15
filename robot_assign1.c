@@ -7,6 +7,9 @@
 #include "PID_Control.h"
 
 /* DEFINES */
+#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, -182.88},{297.18, -182.88},{406.400, -302.26},{060.96, -403.86},{0,0}}
+#define NUMBER_OF_WAYPOINTS 6
+
 #define F_Kp 0.9
 #define F_Kd 0.09
 #define F_Ki 0.01
@@ -70,23 +73,28 @@ float get_intercept(float m, float end_x, float end_y){
 
 /* current_theta-get_theta_to_target() = theta to correct */
 float get_theta_to_target(float start_x, float start_y, float end_x, float end_y){
+	//this needs to be made more robust... what happens after it turns around?
+  
  	float theta_to_target = atan( (end_y - start_y) / (end_x-start_x) );
-	
- 	if( end_x < start_x ){//its gonna be outside of the range of arctan
-   		if( end_y  > start_y)
+	if( end_x < start_x ){//its gonna be outside of the range of arctan//this heuristic isnt perfect--> consider negative motion
+   		if( end_y  > start_y){
+			printf("case1");
      			theta_to_target = M_PI + theta_to_target; //turn left
-   		else if(start_y>end_y)
-    			theta_to_target = M_PI - theta_to_target;//turn right
-   		else//it needs to make a 180
+		}else if(start_y>end_y){
+    			printf("case1");
+			theta_to_target = M_PI - theta_to_target;//turn right
+		}else//it needs to make a 180
      			theta_to_target = M_PI;//180 degrees
  	}
+ 	printf("  get theta to target called: start x = %f,end x = %f, start x = %f,end x = %f, deduced theta = %f\n", start_x, end_x, start_y, end_y, theta_to_target);
  	
  	return theta_to_target;
 }
 
 void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
-	float	output,
-		tolerance;
+	float	rot_amount,
+		output,
+		test;
 	int  	ang_vel;
 	vector *expected_vel;
 	
@@ -95,8 +103,10 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	
 	expected_vel = (vector *)calloc(1, sizeof(vector));
 	
+	rot_amount = target_theta - current_location->v[2];
+	
 	do {
-		 output = Compute(rotPID, current_location->v[2], target_theta);
+		 output = Compute(rotPID, current_location->v[2], rot_amount);
 		 printf("Rotate PID Output = %f\n", output);
 		 
 		 // correlate output to an angular velocity this is a crappy substitute
@@ -120,10 +130,9 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		 get_Position(ri, current_location, expected_vel);
 		 printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		 
-		 tolerance = target_theta - current_location->v[2];
-		 if(tolerance < 0.0) tolerance *= -1.0;
-		 
-	} while (tolerance > 0.1);
+		 if(output < 0.0) test = -1.0 * output;
+		 else test = output;
+	} while (test > 10);  // once again, very very arbitrary
 	
 	free(expected_vel);
 }
@@ -173,6 +182,8 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	x_i = current_location->v[0];
 	y_i = current_location->v[1];
 	
+	distance_to_target = get_euclidian_distance(x_i, y_i, end_x, end_y);//rename this at some point
+	
 	// find initial theta to target in case we need to rotate immediately
 	theta_target = get_theta_to_target(x_i, y_i, end_x, end_y);
 	
@@ -186,20 +197,17 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	do {
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		
-		distance_to_target = current_distance + get_euclidian_distance(current_location->v[0],
-			current_location->v[1], end_x, end_y);
-		
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
-		
+		/*
 		if((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit)) {
 			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 			rotate_to_theta(ri, theta_target, current_location);
 			
 			/* reset PID control for rest of move */
-			reset_PID(fwdPID);
+			/*reset_PID(fwdPID);
 		}
-		
+		*/
 		//move to reduce error at fill speed, then using PID in final quarter
 		if( current_distance >= 0.25 * distance_to_target ) {
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
@@ -230,7 +238,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
    		//refresh current position values
    		get_Position(ri, current_location, expected_vel);
-		//printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
+		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
 		tolerance = distance_to_target - current_distance;
 		if(tolerance < 0) tolerance *= -1.0;
@@ -260,6 +268,8 @@ int main(int argv, char **argc) {
 		scalar_target_dist,
 		d_theta;
 	    
+	float waypoints[NUMBER_OF_WAYPOINTS][2] = WAYPOINT_COORDS;//WAYPOINT_COORDS;
+	int numWayPoints = NUMBER_OF_WAYPOINTS, index;
 	// Make sure we have a valid command line argument
         if(argv <= 3) {
                 printf("Usage: robot_test <address of robot> <distance to travel in X in cm> <distance to travel in Y in cm>\n");
@@ -290,7 +300,13 @@ int main(int argv, char **argc) {
 #if (DATA_COLLECT)
 	print_stance_csv();
 #endif
-	go_to_position(&ri, target_x, target_y);
+	//waypoint nav:
+	for(index = 0; index < numWayPoints; index++){
+	  target_x = waypoints[index][0];
+	  target_y = waypoints[index][1];
+	  go_to_position(&ri, target_x, target_y);
+	  printf("\n -------------Waypoint %d Reached---------------\n\n", (index+1));
+	}
 	/*
         // Action loop
         do {
