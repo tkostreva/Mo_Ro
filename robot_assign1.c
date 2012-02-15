@@ -105,18 +105,18 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		 if(output > 0) ang_vel = 6;
 		 else ang_vel = -6;
 		 
-		 if(ang_vel < 0) {
-			ri_move(ri, RI_TURN_RIGHT, ang_vel);
+		 if(ang_vel > 0) {
+			ri_move(ri, RI_TURN_LEFT, ang_vel);
 			expected_vel->v[0] = NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
-			expected_vel->v[1] = rot_speed[ang_vel - 1];
+			expected_vel->v[2] = rot_speed[ang_vel - 1];
 		 }
 		 else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
 			expected_vel->v[0] = -1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = -1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
-			expected_vel->v[1] = -1 * rot_speed[ang_vel - 1];
+			expected_vel->v[2] = -1 * rot_speed[ang_vel - 1];
 		 }
 		 
 		 get_Position(ri, current_location, expected_vel); 
@@ -171,7 +171,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		}
 		
 		//move to reduce error at fill speed, then using PID in final quarter
-		if( current_distance >= 0.75 * distance_to_target ) {
+		if( current_distance <= 0.75 * distance_to_target ) {
 			  output = Compute(fwdPID, current_distance, distance_to_target);
 			  
 			  // correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
@@ -197,7 +197,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
    		//refresh current position values
    		get_Position(ri, current_location, expected_vel);   	
- 	} while( current_distance < (0.8 * distance_to_target) || output < 100  );  // chose a VERY ARBITRARY NUMBER FOR THE MOMENT
+ 	} while( current_distance > (0.2 * distance_to_target) || output < 100  );  // chose a VERY ARBITRARY NUMBER FOR THE MOMENT
 
  	//point robot to end theta using PID //code me
  	free(current_location);
