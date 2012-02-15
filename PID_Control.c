@@ -10,6 +10,11 @@ void SetTunings(PID *p, double Kp, double Ki, double Kd) {
 	p->kd = Kd;
 }
 
+void reset_PID(PID *p){
+	p->errSum = 0.0;
+	p->lastErr = 0.0;
+}
+
 double Compute(PID *p, double Input, double Setpoint) {
 	double 	error,
 		dErr,
