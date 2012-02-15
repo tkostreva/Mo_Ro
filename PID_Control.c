@@ -8,6 +8,8 @@ void SetTunings(PID *p, double Kp, double Ki, double Kd) {
 	p->kp = Kp;
 	p->ki = Ki;
 	p->kd = Kd;
+	
+	clock_gettime(CLOCK_REALTIME, &(p->lastTime));
 }
 
 void reset_PID(PID *p){
@@ -23,7 +25,9 @@ double Compute(PID *p, double Input, double Setpoint) {
 	
 	clock_gettime(CLOCK_REALTIME, &now);
    
-	dt = (double)(now.tv_sec - p->lastTime.tv_sec) + (double)(now.tv_nsec - p->lastTime.tv_nsec)/100000000.0;
+	dt = (double)(now.tv_sec - p->lastTime.tv_sec) + (double)(now.tv_nsec - p->lastTime.tv_nsec)/1000000000.0;
+	
+	printf("dt = %f\n", dt);
 	
 	/*Compute all the working error variables*/
 	error = Setpoint - Input;

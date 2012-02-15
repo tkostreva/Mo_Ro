@@ -2,6 +2,7 @@
 #define _PID_Control_
 
 #include <time.h>
+#include <stdio.h>
 
 typedef struct _PID_ {
 	double	errSum,
