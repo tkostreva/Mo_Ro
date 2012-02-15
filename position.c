@@ -82,41 +82,6 @@ float delta_theta(float current_theta, float previous_theta) {
 	return d_theta;	
 }
 
-float turn_to(){
-	float d_theta;
-	
-	d_theta = delta_theta(current->kalmanFiltered->v[2], previous->kalmanFiltered->v[2]);
-	printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
-	        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
-	return d_theta;
-}
-
-/*int check_rotation(int rot){
-	//check for right rotation
-	if (rot == 0){
-		if (current->kalmanFiltered->v[2] < previous->kalmanFiltered->v[2])
-			return 1;
-		else
-			return 0;
-	}
-	else{
-		if (current->kalmanFiltered->v[2] > previous->kalmanFiltered->v[2])
-			return 1;
-		else
-			return 0;
-		
-	}
-	
-}*/
-void update_theta(char *s){
-	//update previous kalman filter theta data
-	previous->kalmanFiltered->v[2] = current->kalmanFiltered->v[2];
-	//printf("-----------------Robot Turning %s---------------------------\n",s);
-	//printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
-	//        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
-	//return d_theta;
-}
-
 // Create a Robot Stance structure and allocate memory for pointers
 robot_stance *create_stance(){
 	robot_stance *rs = (robot_stance *) calloc(1, sizeof(robot_stance));
@@ -243,13 +208,14 @@ void room_change(robot_if_t *ri){
 }
 
 void get_Position(robot_if_t *ri, vector *loc, vector *vel){
-	//float loc_wo_kalman[3];
-		
 	// copy current stance into previous
 	copy_stance(current, previous);
 		  
 	update_sensor_data(ri);
 	get_stance(current, ri);
+	
+	// Prevent NS Wrap Around  NO NORTHSTAR THETA FILTERING //
+	current->ns->theta = delta_theta(current->ns->theta, previous->ns->theta) + previous->ns->theta;
 	
 	// check for room change
 	if (current->ns->room != previous->ns->room) room_change(ri);
@@ -268,7 +234,6 @@ void get_Position(robot_if_t *ri, vector *loc, vector *vel){
 	current->weTranslated->v[1] += last->kalmanFiltered->v[1];
 	current->weTranslated->v[2] += last->kalmanFiltered->v[2];
 	
-#if (!DATA_COLLECT)	
 	//diagnostic
 	printf("NS Translation Result = ");
 	PrintVector(current->nsTranslated);
@@ -276,7 +241,7 @@ void get_Position(robot_if_t *ri, vector *loc, vector *vel){
 	//diagnostic
 	printf("WE Translation Result = ");
 	PrintVector(current->weTranslated);
-#endif
+
 	//  Old average of both transforms
 	/*loc_wo_kalman[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc_wo_kalman[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;

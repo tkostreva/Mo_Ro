@@ -266,9 +266,7 @@ int main(int argv, char **argc) {
 	robot_if_t ri;
 	//vector 	*location = (vector *)calloc(1, sizeof(vector));
 	float 	target_x,
-		target_y,
-		scalar_target_dist,
-		d_theta;
+		target_y;		
 	    
 	float waypoints[NUMBER_OF_WAYPOINTS][2] = WAYPOINT_COORDS;//WAYPOINT_COORDS;
 	int numWayPoints = NUMBER_OF_WAYPOINTS, index;
@@ -279,8 +277,7 @@ int main(int argv, char **argc) {
         }
         
         // Setup the robot with the address passed in
-        if(ri_setup(&ri, argc[1], 0))
-                printf("Failed to setup the robot!\n");
+        if(ri_setup(&ri, argc[1], 0)) printf("Failed to setup the robot!\n");
 	
 	// Check condition of battery, exit if not enough charge
 	//battery_check(&ri);
@@ -291,11 +288,6 @@ int main(int argv, char **argc) {
 	init_PID(fwdPID, F_Kp, F_Ki, F_Kd);
 	init_PID(rotPID, R_Kp, R_Ki, R_Kd);
 	
-	// Retrieve target distance from command line
-	target_x = (float) atoi(argc[2]);
-	target_y = (float) atoi(argc[3]);
-	//scalar_target_dist = get_euclidian_distance(0.0, 0.0, target_x, target_y);
-			
 	// Retrieve initial position, initailize current and last
 	init_pos(&ri);
 
@@ -309,81 +301,7 @@ int main(int argv, char **argc) {
 	  go_to_position(&ri, target_x, target_y);
 	  printf("\n -------------Waypoint %d Reached---------------\n\n", (index+1));
 	}
-	/*
-        // Action loop
-        do {
-                // Move forward unless there's something in front of the robot
-                if(!ri_IR_Detected(&ri)) {
-		// Bad attempt at PID
-			d_theta = turn_to();
-			//printf("Delta Theta = %f\n", d_theta);
-			
-			// Straigten out robot if neccessary
-			if ( d_theta > 0.07 ) {
-				ri_move(&ri, RI_TURN_RIGHT, 6);
-				//ri_move(&ri, RI_MOVE_FWD_RIGHT, RI_SLOWEST);
-				ri_move(&ri, RI_MOVE_FORWARD, 5);
-				printf("-----------------Robot Turning Right---------------------------\n");
-				/*while (1){
-					get_Position(&ri, location);
-					
-					//check right rotation
-					if (check_rotation(0) == 1)
-						break;
-					ri_move(&ri, RI_TURN_RIGHT, 6);
-					d_theta = turn_to();
-				}*/
-	/*				
-				update_theta("Right");
-			}
-			else if ( d_theta < -0.07) {
-				ri_move(&ri, RI_TURN_LEFT, 6);
-				//ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
-				ri_move(&ri, RI_MOVE_FORWARD, 5);
-				printf("-----------------Robot Turning Left---------------------------\n");
-				/*while (1){
-					get_Position(&ri, location);
-					
-					//check left rotation
-					if (check_rotation(1) == 1)
-						break;
-					ri_move(&ri, RI_TURN_LEFT, 6);
-					d_theta = turn_to();
-				}*/
-	/*			update_theta("Left");
-			}
-			else {
-				if(location->v[0] < 0.8 * scalar_target_dist) ri_move(&ri, RI_MOVE_FORWARD,1);
-				else ri_move(&ri, RI_MOVE_FORWARD, RI_SLOWEST);
-			}
-		}
-		else {
-			printf("I found an obstacle!  Staying Safe!\n\n");
-			exit(-1);
-			/*
-			printf("I found an obstacle!  Turning Right!\n\n");
-			while(ri_IR_Detected(&ri)){
-				ri_move(&ri, RI_TURN_RIGHT, 6);
-				ri_move(&ri, RI_MOVE_FORWARD, 5);
-				update_theta("Right");
-			}
-			*/
-	/*	}
-		
-					
-		get_Position(&ri, location);
-#if (DATA_COLLECT)
-		print_stance_csv();
-#else
-		//printf("Location:  X = %f cm\tY = %f cm\ttarget = %f\n", location->v[0], location->v[1], target_x);
-		printf("Kalmann filtered result = %f\t%f\t%f\n", location->v[0], location->v[1], location->v[2]);
-#endif
-        } while(location->v[1] > target_x);
-
 	
-	free(location);
-	
-	*/
 	free(fwdPID);
 	free(rotPID);
 	
