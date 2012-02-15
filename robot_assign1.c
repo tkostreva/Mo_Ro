@@ -171,7 +171,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		}
 		
 		//move to reduce error at fill speed, then using PID in final quarter
-		if( current_distance <= 0.75 * distance_to_target ) {
+		if( current_distance <= 0.25 * distance_to_target ) {
 			  output = Compute(fwdPID, current_distance, distance_to_target);
 			  
 			  // correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
