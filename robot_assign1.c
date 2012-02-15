@@ -7,6 +7,9 @@
 #include "PID_Control.h"
 
 /* DEFINES */
+#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, -182.88},{297.18, -182.88},{406.400, -302.26},{060.96, -403.86},{0,0}}
+#define NUMBER_OF_WAYPOINTS 6
+
 #define F_Kp 0.9
 #define F_Kd 0.09
 #define F_Ki 0.01
@@ -70,16 +73,20 @@ float get_intercept(float m, float end_x, float end_y){
 
 /* current_theta-get_theta_to_target() = theta to correct */
 float get_theta_to_target(float start_x, float start_y, float end_x, float end_y){
+	//this needs to be made more robust... what happens after it turns around?
+  
  	float theta_to_target = atan( (end_y - start_y) / (end_x-start_x) );
-	
- 	if( end_x < start_x ){//its gonna be outside of the range of arctan
-   		if( end_y  > start_y)
+	if( end_x < start_x ){//its gonna be outside of the range of arctan//this heuristic isnt perfect--> consider negative motion
+   		if( end_y  > start_y){
+			printf("case1");
      			theta_to_target = M_PI + theta_to_target; //turn left
-   		else if(start_y>end_y)
-    			theta_to_target = M_PI - theta_to_target;//turn right
-   		else//it needs to make a 180
+		}else if(start_y>end_y){
+    			printf("case1");
+			theta_to_target = M_PI - theta_to_target;//turn right
+		}else//it needs to make a 180
      			theta_to_target = M_PI;//180 degrees
  	}
+ 	printf("  get theta to target called: start x = %f,end x = %f, start x = %f,end x = %f, deduced theta = %f\n", start_x, end_x, start_y, end_y, theta_to_target);
  	
  	return theta_to_target;
 }
@@ -174,7 +181,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	x_i = current_location->v[0];
 	y_i = current_location->v[1];
 	
-	distance_to_target = get_euclidian_distance(x_i, y_i, end_x, end_y);
+	distance_to_target = get_euclidian_distance(x_i, y_i, end_x, end_y);//rename this at some point
 	
 	// find initial theta to target in case we need to rotate immediately
 	theta_target = get_theta_to_target(x_i, y_i, end_x, end_y);
@@ -260,6 +267,8 @@ int main(int argv, char **argc) {
 		scalar_target_dist,
 		d_theta;
 	    
+	float waypoints[NUMBER_OF_WAYPOINTS][2] = WAYPOINT_COORDS;//WAYPOINT_COORDS;
+	int numWayPoints = NUMBER_OF_WAYPOINTS, index;
 	// Make sure we have a valid command line argument
         if(argv <= 3) {
                 printf("Usage: robot_test <address of robot> <distance to travel in X in cm> <distance to travel in Y in cm>\n");
@@ -290,7 +299,13 @@ int main(int argv, char **argc) {
 #if (DATA_COLLECT)
 	print_stance_csv();
 #endif
-	go_to_position(&ri, target_x, target_y);
+	//waypoint nav:
+	for(index = 0; index < numWayPoints; index++){
+	  target_x = waypoints[index][0];
+	  target_y = waypoints[index][1];
+	  go_to_position(&ri, target_x, target_y);
+	  printf("\n -------------Waypoint %d Reached---------------\n\n", (index+1));
+	}
 	/*
         // Action loop
         do {
