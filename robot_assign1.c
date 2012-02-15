@@ -7,8 +7,10 @@
 #include "PID_Control.h"
 
 /* DEFINES */
-#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, -182.88},{297.18, -182.88},{406.400, -302.26},{060.96, -403.86},{0,0}}
+#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 #define NUMBER_OF_WAYPOINTS 6
+//#define WAYPOINT_COORDS {{0,-100}}
+//#define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 0.9
 #define F_Kd 0.09
@@ -78,10 +80,10 @@ float get_theta_to_target(float start_x, float start_y, float end_x, float end_y
  	float theta_to_target = atan( (end_y - start_y) / (end_x-start_x) );
 	if( end_x < start_x ){//its gonna be outside of the range of arctan//this heuristic isnt perfect--> consider negative motion
    		if( end_y  > start_y){
-			printf("case1");
+			printf("theta > 90 case1 -> left  ");
      			theta_to_target = M_PI + theta_to_target; //turn left
 		}else if(start_y>end_y){
-    			printf("case1");
+    			printf("theta > 90 case2 -> right ");
 			theta_to_target = M_PI - theta_to_target;//turn right
 		}else//it needs to make a 180
      			theta_to_target = M_PI;//180 degrees
@@ -166,8 +168,10 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		upper_limit,
 		lower_limit,
 		theta_target,
-		distance_to_target;
+		distance_to_target,
+		tolerance;
 	int	bot_speed;
+	tolerance = 20.0;//adjustable.  How close should I be to the waypoint before moving onto the next one?
 	vector 	*current_location,
 		*expected_vel;
 		
@@ -191,7 +195,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	// find slope and intercept of line to be traveled to define limits on path
 	slope = get_slope(current_location->v[0], current_location->v[1], end_x, end_y);
 	intercept = get_intercept(slope, end_x, end_y);
-	
+	tolerance = 5.0;
 	do {
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
@@ -210,7 +214,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		*/
 		//move to reduce error at fill speed, then using PID in last 75 cm
 		if( distance_to_target <= 75 ) {
-			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, setpoint);
+			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
 			  output = Compute(fwdPID, current_distance, setpoint );
 			  printf("FWD PID Output = %f\n", output);
 			  
@@ -240,7 +244,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
    		get_Position(ri, current_location, expected_vel);
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
- 	} while(distance_to_target > 5);
+ 	} while(fabs(distance_to_target) > tolerance);
 
  	//point robot to end theta using PID //code me
  	free(current_location);
@@ -290,7 +294,7 @@ int main(int argv, char **argc) {
 	  target_x = waypoints[index][0];
 	  target_y = waypoints[index][1];
 	  go_to_position(&ri, target_x, target_y);
-	  printf("\n -------------Waypoint %d Reached---------------\n\n", (index+1));
+	  printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
 	}
 	
 	free(fwdPID);
