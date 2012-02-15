@@ -5,16 +5,17 @@
 #include <stdio.h>
 
 typedef struct _PID_ {
-	double	errSum,
+	int	i;
+	double	errSum[8],
 		lastErr,
 		kp,
 		ki,
-		kd;	
+		kd;
 	struct timespec lastTime;
 } PID;
 
 /* Set tunable proportionality constants */
-void SetTunings(PID *p, double Kp, double Ki, double Kd);
+void init_PID(PID *p, double Kp, double Ki, double Kd);
 
 void reset_PID(PID *p);
 
