@@ -93,6 +93,9 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	int  	ang_vel;
 	vector *expected_vel;
 	
+	/* reset PID control for this rotation */
+	reset_PID(rotPID);
+	
 	expected_vel = (vector *)calloc(1, sizeof(vector));
 	
 	rot_amount = target_theta - current_location->v[2];
@@ -144,6 +147,9 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	current_location = (vector *)calloc(1, sizeof(vector));
 	expected_vel = (vector *)calloc(1, sizeof(vector));
  	
+	/* reset PID control for this move */
+	reset_PID(fwdPID);
+		
  	//initialize start_x, start_y, start_theta
 	get_Position(ri, current_location, expected_vel);
 	
@@ -168,11 +174,16 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		if((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit)) {
 			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 			rotate_to_theta(ri, theta_target, current_location);
+			
+			/* reset PID control for rest of move */
+			reset_PID(fwdPID);
 		}
 		
 		//move to reduce error at fill speed, then using PID in final quarter
-		if( current_distance <= 0.25 * distance_to_target ) {
+		//if( current_distance <= 0.25 * distance_to_target ) {
+		if(1) {
 			  output = Compute(fwdPID, current_distance, distance_to_target);
+			  printf("FWD PID Output = %f\n", output);
 			  
 			  // correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
 			  

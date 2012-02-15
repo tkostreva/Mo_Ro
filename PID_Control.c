@@ -7,14 +7,14 @@ struct timespec now;
 void SetTunings(PID *p, double Kp, double Ki, double Kd) {
 	p->kp = Kp;
 	p->ki = Ki;
-	p->kd = Kd;
-	
-	clock_gettime(CLOCK_REALTIME, &(p->lastTime));
+	p->kd = Kd;	
 }
 
 void reset_PID(PID *p){
 	p->errSum = 0.0;
 	p->lastErr = 0.0;
+	
+	clock_gettime(CLOCK_REALTIME, &(p->lastTime));
 }
 
 double Compute(PID *p, double Input, double Setpoint) {
