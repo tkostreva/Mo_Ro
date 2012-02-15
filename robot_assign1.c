@@ -12,7 +12,7 @@
 
 #define F_Kp 0.9
 #define F_Kd 0.09
-#define F_Ki 0.01
+#define F_Ki 0.01s
 
 #define R_Kp 3.0
 #define R_Kd 0.3
@@ -155,7 +155,8 @@ int fwdSpeedScaling(float PIDout) {
 }
 
 void go_to_position(robot_if_t *ri, float end_x, float end_y){
- 	float	distance_to_target,
+ 	float	distance_from_start_to_target,
+		
 		x_i,
 		y_i,
 		current_distance,
@@ -165,7 +166,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		upper_limit,
 		lower_limit,
 		theta_target,
-		tolerance;
+		tolerance=3.0;
 	int	bot_speed;
 	vector 	*current_location,
 		*expected_vel;
@@ -181,7 +182,8 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	x_i = current_location->v[0];
 	y_i = current_location->v[1];
 	
-	distance_to_target = get_euclidian_distance(x_i, y_i, end_x, end_y);//rename this at some point
+	//move the following 2 values into loop?
+	distance_from_start_to_target = get_euclidian_distance(x_i, y_i, end_x, end_y);
 	
 	// find initial theta to target in case we need to rotate immediately
 	theta_target = get_theta_to_target(x_i, y_i, end_x, end_y);
@@ -194,6 +196,8 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	intercept = get_intercept(slope, end_x, end_y);
 	
 	do {
+		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);//make this a dynamic value
+		
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
@@ -207,10 +211,10 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			/*reset_PID(fwdPID);
 		}
 		*/
-		//move to reduce error at fill speed, then using PID in final quarter
-		if( current_distance >= 0.25 * distance_to_target ) {
+		//move to reduce error at fill speed, then using PID in last 75 cm
+		if( 75 >= distance_to_target ) {
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
-			  output = Compute(fwdPID, current_distance, distance_to_target );
+			  output = Compute(fwdPID, current_distance, distance_from_start_to_target );
 			  printf("FWD PID Output = %f\n", output);
 			  
 			  // correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
@@ -239,9 +243,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
    		get_Position(ri, current_location, expected_vel);
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
-		tolerance = distance_to_target - current_distance;
-		if(tolerance < 0) tolerance *= -1.0;
- 	} while( tolerance > 3.0  );
+ 	} while(abs(distance_to_target) > tolerance);
 
  	//point robot to end theta using PID //code me
  	free(current_location);
