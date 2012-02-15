@@ -207,8 +207,10 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		}
 		
    		//refresh current position values
-   		get_Position(ri, current_location, expected_vel);   	
- 	} while( current_distance > (0.2 * distance_to_target) || output < 100  );  // chose a VERY ARBITRARY NUMBER FOR THE MOMENT
+   		get_Position(ri, current_location, expected_vel);
+		
+		//printf("Kalman Data = %f\t%f\t%f\n",current_location->v[0], current_location->v[1], output);
+ 	} while( current_distance >= (distance_to_target) || output < 100  );  // chose a VERY ARBITRARY NUMBER FOR THE MOMENT
 
  	//point robot to end theta using PID //code me
  	free(current_location);
@@ -280,7 +282,7 @@ int main(int argv, char **argc) {
 				//ri_move(&ri, RI_MOVE_FWD_RIGHT, RI_SLOWEST);
 				ri_move(&ri, RI_MOVE_FORWARD, 5);
 				printf("-----------------Robot Turning Right---------------------------\n");
-				/*while (1){
+				while (1){
 					get_Position(&ri, location);
 					
 					//check right rotation
@@ -288,8 +290,8 @@ int main(int argv, char **argc) {
 						break;
 					ri_move(&ri, RI_TURN_RIGHT, 6);
 					d_theta = turn_to();
-				}*/
-	/*				
+				}
+					
 				update_theta("Right");
 			}
 			else if ( d_theta < -0.07) {
@@ -297,7 +299,7 @@ int main(int argv, char **argc) {
 				//ri_move(&ri, RI_MOVE_FWD_LEFT, RI_SLOWEST);
 				ri_move(&ri, RI_MOVE_FORWARD, 5);
 				printf("-----------------Robot Turning Left---------------------------\n");
-				/*while (1){
+				while (1){
 					get_Position(&ri, location);
 					
 					//check left rotation
@@ -305,8 +307,8 @@ int main(int argv, char **argc) {
 						break;
 					ri_move(&ri, RI_TURN_LEFT, 6);
 					d_theta = turn_to();
-				}*/
-	/*			update_theta("Left");
+				}
+				update_theta("Left");
 			}
 			else {
 				if(location->v[0] < 0.8 * scalar_target_dist) ri_move(&ri, RI_MOVE_FORWARD,1);
@@ -316,15 +318,15 @@ int main(int argv, char **argc) {
 		else {
 			printf("I found an obstacle!  Staying Safe!\n\n");
 			exit(-1);
-			/*
+			
 			printf("I found an obstacle!  Turning Right!\n\n");
 			while(ri_IR_Detected(&ri)){
 				ri_move(&ri, RI_TURN_RIGHT, 6);
 				ri_move(&ri, RI_MOVE_FORWARD, 5);
 				update_theta("Right");
 			}
-			*/
-	/*	}
+			
+		}
 		
 					
 		get_Position(&ri, location);
