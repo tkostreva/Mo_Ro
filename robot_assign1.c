@@ -12,7 +12,7 @@
 
 #define F_Kp 0.9
 #define F_Kd 0.09
-#define F_Ki 0.01s
+#define F_Ki 0.01
 
 #define R_Kp 3.0
 #define R_Kd 0.3
@@ -156,7 +156,7 @@ int fwdSpeedScaling(float PIDout) {
 
 void go_to_position(robot_if_t *ri, float end_x, float end_y){
  	float	distance_from_start_to_target,
-		
+		distance_to_target,
 		x_i,
 		y_i,
 		current_distance,
@@ -243,7 +243,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
    		get_Position(ri, current_location, expected_vel);
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
- 	} while(abs(distance_to_target) > tolerance);
+ 	} while(fabs(distance_to_target) > tolerance);
 
  	//point robot to end theta using PID //code me
  	free(current_location);
