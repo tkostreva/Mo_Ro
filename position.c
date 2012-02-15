@@ -163,8 +163,8 @@ void get_kalman_filter_data(vector *kf_data){
 void init_pos(robot_if_t *ri){
 	int i;
 	//float vel[3] = { 350.0/54.0, 0, 0 };
-	//float vel[3] = {35, 0, 0 };
-	float vel[3] = {0, 0, 10 }
+	float vel[3] = {35, 0, 0 };
+	//float vel[3] = {0, 0, 10 };
 	float pos[3] = {0, 0, 0};
 	int deltaT = 1;
 	
