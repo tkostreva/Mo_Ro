@@ -36,19 +36,21 @@ float get_we_Y(we_stance *s) {
 
 // Currently Reports Theta in radians for change of back WE since last
 float get_we_Theta(we_stance *s) {
-	float temp;
+	float theta;
+	printf("Back Total = %d\n", s->back_tot);
+	theta = s->back_tot / WE_TICKS_PER_CM;
 	
-	temp = s->back_delta / WE_TICKS_PER_CM;
-	
-	temp /= (2 * 12.5 * M_PI);
+	theta /= -(8.0 * M_PI);
   
-	return temp;
+	return theta;
 }
 
-void transform_WE(we_stance *s, vector *ws, float theta){
-	ws->v[0] = /*sin(theta) * */ get_we_X(s);
-	ws->v[1] = /*cos(theta) * */ get_we_Y(s);
-	ws->v[2] = theta + get_we_Theta(s);
+void transform_WE(we_stance *s, vector *ws){
+	float theta = get_we_Theta(s);
+  
+	ws->v[0] = sin(theta) * get_we_X(s);
+	ws->v[1] = cos(theta) * get_we_Y(s);
+	ws->v[2] = theta;
 }
 
 void print_we(we_stance *s) {

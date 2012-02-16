@@ -20,7 +20,7 @@ typedef struct _we_stance_ {
 // Populate Wheel Encoder Stance Object from sensor data
 void get_we(we_stance *s, robot_if_t *ri );
 
-void transform_WE(we_stance *s, vector *ws, float theta);
+void transform_WE(we_stance *s, vector *ws);
 
 void print_we(we_stance *s);
 

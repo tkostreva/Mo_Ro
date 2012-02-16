@@ -7,18 +7,18 @@
 #include "PID_Control.h"
 
 /* DEFINES */
-#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
-#define NUMBER_OF_WAYPOINTS 6
-//#define WAYPOINT_COORDS {{0,-100}}
+//#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
+#define NUMBER_OF_WAYPOINTS 1 /*6*/
+#define WAYPOINT_COORDS {{0.0,100.0}}
 //#define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 0.9
 #define F_Kd 0.09
 #define F_Ki 0.01
 
-#define R_Kp 0.5
-#define R_Kd 0.05
-#define R_Ki 0.005
+#define R_Kp 10.0
+#define R_Kd 0.1
+#define R_Ki 0.1
 
 #define LANE_LIMIT 14.5  /* currently the radius of the bot in [cm] */
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
@@ -54,6 +54,45 @@ float fwd_speed[] = {  // Forward speeds in [cm/s]
 };
 
 /* FUNCTIONS */
+int fwdSpeedScaling(float PIDout) {
+	int 	temp,
+		speed;
+	
+	temp = (int) PIDout;
+	temp = abs(temp);
+	
+	if (temp >= 80) speed = 1;
+	else if (temp >= 60 && temp < 80) speed = 3;
+	else if (temp >= 40 && temp < 60) speed = 5;
+	else if (temp >= 20 && temp < 40) speed = 7;
+	else if (temp < 20) speed = 9;
+	
+	if(PIDout < 0) speed *= -1;
+	
+	return speed;
+}
+
+int rotSpeedScaling(float PIDout) {
+	float 	temp;
+	int	speed;
+	
+	temp = fabs(PIDout);
+	
+	if (temp >= 10.0) speed = 1;
+	else if (temp >= 9.0 && temp < 10.0) speed = 2;
+	else if (temp >= 8.0 && temp < 9.0) speed = 3;
+	else if (temp >= 7.0 && temp < 8.0) speed = 4;
+	else if (temp >= 6.0 && temp < 7.0) speed = 5;
+	else if (temp >= 5.0 && temp < 6.0) speed = 6;
+	else if (temp >= 4.0 && temp < 5.0) speed = 7;
+	else if (temp >= 3.0 && temp < 4.0) speed = 8;
+	else if (temp >= 2.0 && temp < 3.0) speed = 9;
+	else if (temp < 2.0) speed = 10;
+	
+	if(PIDout < 0) speed *= -1;
+	
+	return speed;
+}
 
 float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){
 	float	diff1,
@@ -88,16 +127,17 @@ float get_theta_to_target(float start_x, float start_y, float end_x, float end_y
 		}else//it needs to make a 180
      			theta_to_target = M_PI;//180 degrees
  	}
- 	printf("  get theta to target called: start x = %f,end x = %f, start x = %f,end x = %f, deduced theta = %f\n", start_x, end_x, start_y, end_y, theta_to_target);
+ 	printf("  get theta to target called: start x = %f,end x = %f, start x = %f,end x = %f, deduced theta = %f\n\n", start_x, end_x, start_y, end_y, theta_to_target);
  	
  	return theta_to_target;
 }
 
 void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
-	float	rot_amount,
-		output,
-		test;
-	int  	ang_vel;
+	float	output,
+		rot_amount,
+		sf;		/* scaling factor for windup */
+	int  	ang_vel,
+		i = 1;
 	vector *expected_vel;
 	
 	/* reset PID control for this rotation */
@@ -105,56 +145,47 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	
 	expected_vel = (vector *)calloc(1, sizeof(vector));
 	
-	rot_amount = target_theta - current_location->v[2];
-	
 	do {
-		 output = Compute(rotPID, current_location->v[2], rot_amount);
-		 printf("Rotate PID Output = %f\n", output);
+		rot_amount = fabs(target_theta - current_location->v[2]);
+		
+		printf("Curr Theta = %f\tTarget Theta = %f\n", current_location->v[2], target_theta);
+		output = Compute(rotPID, current_location->v[2], target_theta);
+		printf("Rotate PID Output = %f\n", output);
+		
+		// correlate output to an angular velocity this is a crappy substitute
+		//if(output > 0) ang_vel = 7;
+		//else ang_vel = -7;
+		ang_vel = rotSpeedScaling(output);
 		 
-		 // correlate output to an angular velocity this is a crappy substitute
-		 if(output > 0) ang_vel = 6;
-		 else ang_vel = -6;
+		sf = ((float) i) / 10.0;
 		 
-		 if(ang_vel > 0) {
+		if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
 			expected_vel->v[0] = NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = rot_speed[ang_vel - 1];
 		 }
-		 else {
+		else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
 			expected_vel->v[0] = -1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = -1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = -1 * rot_speed[ang_vel - 1];
 		 }
+		
+		/* factor in windup time with scaling factor */
+		expected_vel->v[0] *= sf;
+		expected_vel->v[1] *= sf;
+		expected_vel->v[2] *= sf;
+		
+		if(i < 10) i++;
 		 
-		 get_Position(ri, current_location, expected_vel);
-		 printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
-		 
-		 if(output < 0.0) test = -1.0 * output;
-		 else test = output;
-	} while (test > 10);  // once again, very very arbitrary
+		get_Position(ri, current_location, expected_vel);
+		
+		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
+	} while (rot_amount > 0.1);  // once again, very very arbitrary
 	
 	free(expected_vel);
-}
-
-int fwdSpeedScaling(float PIDout) {
-	int 	temp,
-		speed;
-	
-	temp = (int) PIDout;
-	temp = abs(temp);
-	
-	if (temp >= 80) speed = 1;
-	else if (temp >= 60 && temp < 80) speed = 3;
-	else if (temp >= 40 && temp < 60) speed = 5;
-	else if (temp >= 20 && temp < 40) speed = 7;
-	else if (temp < 20) speed = 9;
-	
-	if(PIDout < 0) speed *= -1;
-	
-	return speed;
 }
 
 void go_to_position(robot_if_t *ri, float end_x, float end_y){

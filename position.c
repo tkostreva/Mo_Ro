@@ -58,12 +58,12 @@ void filter_flush(robot_if_t *ri) {
 void get_filtered(robot_stance *s, robot_if_t *ri){
 	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
 	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
-	s->ns_f->theta		= fir_Filter(f[2], s->ns->theta, SHALLOW_FILTER);
+	s->ns_f->theta		= s->ns->theta; //fir_Filter(f[2], s->ns->theta, SHALLOW_FILTER);
 	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
 	s->ns_f->room		= s->ns->room;
 	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, SHALLOW_FILTER);
 	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, SHALLOW_FILTER);
-	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, SHALLOW_FILTER);
+	s->we_f->back_tot	= s->we->back_tot; // (int)fir_Filter(f[5], (float)s->we->back_tot, SHALLOW_FILTER);
 }
 
 // use this to report ACTUAL difference between last theta and current theta ( prevent wrap around )
@@ -77,7 +77,7 @@ float delta_theta(float current_theta, float previous_theta) {
 	// check to see if reported theta wrapped around
 	if(d_theta > M_PI) d_theta = 2.0 * M_PI - d_theta; // theta wrapped from -PI to PI
 		
-	if(d_theta < M_PI) d_theta = -2.0 * M_PI - d_theta; // theta wrapped from PI to -PI	
+	if(d_theta < -M_PI) d_theta = -2.0 * M_PI - d_theta; // theta wrapped from PI to -PI	
 		
 	return d_theta;	
 }
@@ -208,21 +208,27 @@ void room_change(robot_if_t *ri){
 }
 
 void get_Position(robot_if_t *ri, vector *loc, vector *vel){
+	float d_theta;
 	// copy current stance into previous
 	copy_stance(current, previous);
 		  
 	update_sensor_data(ri);
 	get_stance(current, ri);
 	
-	// Prevent NS Wrap Around  NO NORTHSTAR THETA FILTERING //
-	current->ns->theta = delta_theta(current->ns->theta, previous->ns->theta) + previous->ns->theta;
-	
 	// check for room change
 	if (current->ns->room != previous->ns->room) room_change(ri);
 	
+	// Prevent NS Wrap Around  NO NORTHSTAR THETA FILTERING //
+	//printf("Theta_curr = %f\tTheta_prev = %f\t", current->ns->theta, previous->ns->theta);
+	d_theta = delta_theta(current->ns->theta, previous->ns->theta);
+	//printf("Delta theta NS = %f\n", d_theta);
+	current->ns_f->theta = d_theta + previous->ns_f->theta;
+	
+	
+	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
-	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
+	transform_WE(current->we, current->weTranslated);
 
 	// Shift nsTranslated with room switch vector and last kalman
 	current->nsTranslated->v[0] += room_switch->v[0] + last->kalmanFiltered->v[0];
@@ -273,8 +279,11 @@ int NS_theta_cal(robot_if_t *ri, vector *u){
 // Deep copy of robot stance object
 void copy_stance(robot_stance *original, robot_stance *copy){
 	// deep copy room id data
+	copy->ns->theta		= original->ns->theta;
 	copy->ns->room 		= original->ns->room;
 	copy->ns_f->room 	= original->ns_f->room;
+	
+	
 	
 	// deep copy all filtered data
 	copy->ns_f->x 		= original->ns_f->x;
