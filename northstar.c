@@ -4,12 +4,12 @@
 
 #include "northstar.h"
 
-vector *shift_vector;
-matrix *rotation_matrix;
+vector *ns_shift_matrix;
+matrix *ns_rot_matrix;
 matrix *scale_matrix;
 
 float theta_cor[] = {
-	-0.248085, /*ROOM TWO THETA COR*/
+	-0.374721, /*ROOM TWO THETA COR*/
 	-1.456696, /*ROOM THREE THETA COR*/
 	 0.035983, /*ROOM FOUR THETA COR*/
 	-1.502438  /*ROOM FIVE THETA COR*/
@@ -29,41 +29,41 @@ void setup_NS_transforms(ns_stance *s) {
 	float rot_theta = theta_cor[(s->room - 2)];  // rotation theta is defined by theta correctection matrix, values defined during calibration
 	
 	// free pointers in case previously declared
-	free(shift_vector);
-	free(rotation_matrix);
+	free(ns_shift_matrix);
+	free(ns_rot_matrix);
 	free(scale_matrix);
   
 	// get memory for pointers
-	shift_vector = calloc(1, sizeof(vector));
-	rotation_matrix = calloc(1, sizeof(matrix));
+	ns_shift_matrix = calloc(1, sizeof(vector));
+	ns_rot_matrix = calloc(1, sizeof(matrix));
 	scale_matrix = calloc(1, sizeof(matrix));
 	
 	//diagnostic
 	//print_ns(s);
 	
 	// initialize shift vector
-	shift_vector->v[0] = (-1.0)*((float)s->x);
-	shift_vector->v[1] = (-1.0)*((float)s->y);
-	shift_vector->v[2] = (-1.0)*(s->theta);
+	ns_shift_matrix->v[0] = (-1.0)*((float)s->x);
+	ns_shift_matrix->v[1] = (-1.0)*((float)s->y);
+	ns_shift_matrix->v[2] = (-1.0)*(s->theta);
 	//diagnostic
 	//printf("Shift Vector is ");
-	//PrintVector(shift_vector);
+	//PrintVector(ns_shift_matrix);
 	
-	//initialize rotation_matrix
-	rotation_matrix->v[0][0] = cos(rot_theta);
-	rotation_matrix->v[0][1] = sin(rot_theta);
-	rotation_matrix->v[0][2] = 0.0;
+	//initialize ns_rot_matrix
+	ns_rot_matrix->v[0][0] = cos(rot_theta);
+	ns_rot_matrix->v[0][1] = sin(rot_theta);
+	ns_rot_matrix->v[0][2] = 0.0;
 	
-	rotation_matrix->v[1][0] = -1.0 * sin(rot_theta);
-	rotation_matrix->v[1][1] = cos(rot_theta);
-	rotation_matrix->v[1][2] = 0.0;
+	ns_rot_matrix->v[1][0] = -1.0 * sin(rot_theta);
+	ns_rot_matrix->v[1][1] = cos(rot_theta);
+	ns_rot_matrix->v[1][2] = 0.0;
 	
-	rotation_matrix->v[2][0] = 0.0;
-	rotation_matrix->v[2][1] = 0.0;
-	rotation_matrix->v[2][2] = 1.0;
+	ns_rot_matrix->v[2][0] = 0.0;
+	ns_rot_matrix->v[2][1] = 0.0;
+	ns_rot_matrix->v[2][2] = 1.0;
 	
-	//printf("Rotation Matrix = \n");
-	//PrintMatrix( rotation_matrix );
+	printf("Rotation Matrix = \n");
+	PrintMatrix( ns_rot_matrix );
 	
 	//initialize scale_matrix
 	scale_matrix->v[0][0] = 1.0/NS_TICKS_PER_CM;
@@ -92,13 +92,13 @@ void transform_NS(ns_stance *s, vector *ns){
 	//PrintVector(ns);//diagnostic
 	
 	//shift
-	AddVectors(ns, shift_vector, &working_vector);
+	AddVectors(ns, ns_shift_matrix, &working_vector);
 	//diagnostic
-	//printf("Add result = ");
+	//printf("Shift result = ");
 	//PrintVector(&working_vector);
 	
 	//rotate
-	MultMatVec(rotation_matrix, &working_vector, &working_vector_2);
+	MultMatVec(ns_rot_matrix, &working_vector, &working_vector_2);
 	//diagnostic
 	//printf("Rotate Result = ");
 	//PrintVector(&working_vector_2);
@@ -106,7 +106,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	//scale
 	// Update Scaling Matrix based on current signal strength [NOT WORKING RIGHT]
 
-	if(s->sig > 4000) {
+	if(s->sig < 4000) {
 		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
 		scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
 	}
@@ -133,7 +133,7 @@ void print_ns_csv(ns_stance *s){
 }
 
 void exit_ns(){
-	free(shift_vector);
-	free(rotation_matrix);
+	free(ns_shift_matrix);
+	free(ns_rot_matrix);
 	free(scale_matrix);  
 }

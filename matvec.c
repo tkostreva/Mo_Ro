@@ -37,9 +37,11 @@ void MultMatVec ( matrix* m, vector *v, vector* result)
 	for(i=0; i<3; i++){//row
 		result->v[i]=0;
 		for(j=0; j<3; j++){//col
-			result->v[i] += ((m->v[i][j])*(v->v[j]));
-		
+			//printf("Matrix[%d][%d] = %f\tX\tVector[%d] = %f\n", i, j, m->v[i][j], j, v->v[j]);
+			result->v[i] += ( ( m->v[i][j] ) * ( v->v[j] ) );
+			
 		}
+		//printf("Result %d = %f\n", i, result->v[i]);
 	}
 }
 

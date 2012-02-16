@@ -8,19 +8,19 @@
 
 /* DEFINES */
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
-#define NUMBER_OF_WAYPOINTS 1 /*6*/
-#define WAYPOINT_COORDS {{100.0,0}}
+#define NUMBER_OF_WAYPOINTS 2 /*6*/
+#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
 //#define NUMBER_OF_WAYPOINTS 1
 
-#define F_Kp 0.9
-#define F_Kd 0.09
-#define F_Ki 0.01
+#define F_Kp 1.0
+#define F_Ki 0.1
+#define F_Kd 0.01
 
-#define R_Kp 10.0
-#define R_Kd 0.1
-#define R_Ki 0.1
+#define R_Kp 10.0/M_PI
+#define R_Ki 0.5
+#define R_Kd 0.20
 
-#define LANE_LIMIT 14.5  /* currently the radius of the bot in [cm] */
+#define LANE_LIMIT 20.0
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
 
 /* GLOBALS */
@@ -78,18 +78,16 @@ int rotSpeedScaling(float PIDout) {
 	
 	temp = fabs(PIDout);
 	
-	if (temp >= 10.0) speed = 1;
-	else if (temp >= 9.0 && temp < 10.0) speed = 2;
-	else if (temp >= 8.0 && temp < 9.0) speed = 3;
-	else if (temp >= 7.0 && temp < 8.0) speed = 4;
+	if (temp >= 10.0) speed = 5;
+	else if (temp >= 9.0 && temp < 10.0) speed = 5;
+	else if (temp >= 8.0 && temp < 9.0) speed = 5;
+	else if (temp >= 7.0 && temp < 8.0) speed = 5;
 	else if (temp >= 6.0 && temp < 7.0) speed = 5;
 	else if (temp >= 5.0 && temp < 6.0) speed = 6;
 	else if (temp >= 4.0 && temp < 5.0) speed = 7;
-	else if (temp >= 3.0 && temp < 4.0) speed = 8;
-	else if (temp >= 2.0 && temp < 3.0) speed = 9;
-	else if (temp < 2.0) speed = 10;
-	
-	speed = 6;
+	else if (temp >= 3.0 && temp < 4.0) speed = 7;
+	else if (temp >= 2.0 && temp < 3.0) speed = 7;
+	else if (temp < 2.0) speed = 7;
 	
 	if(PIDout < 0) speed *= -1;
 	
@@ -138,8 +136,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	float	output,
 		rot_amount,
 		sf;		/* scaling factor for windup */
-	int  	ang_vel,
-		i = 1;
+	int  	ang_vel;
 	vector *expected_vel;
 	
 	/* reset PID control for this rotation */
@@ -147,32 +144,31 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	
 	expected_vel = (vector *)calloc(1, sizeof(vector));
 	
+	sf = 0.1;
+	
 	do {
 		rot_amount = fabs(target_theta - current_location->v[2]);
 		
+		printf("\n *********************  ROT PID ENABLED  ********************\n\n");
 		printf("Curr Theta = %f\tTarget Theta = %f\n", current_location->v[2], target_theta);
 		output = Compute(rotPID, current_location->v[2], target_theta);
 		printf("Rotate PID Output = %f\n", output);
 		
 		// correlate output to an angular velocity this is a crappy substitute
-		//if(output > 0) ang_vel = 7;
-		//else ang_vel = -7;
 		ang_vel = rotSpeedScaling(output);
-		 
-		sf = ((float) i) / 10.0;
 		 
 		if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
-			expected_vel->v[0] = NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
-			expected_vel->v[1] = NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
+			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
+			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = rot_speed[ang_vel - 1];
 		 }
 		else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
-			expected_vel->v[0] = -1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
-			expected_vel->v[1] = -1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
-			expected_vel->v[2] = -1 * rot_speed[ang_vel - 1];
+			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
+			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
+			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1];
 		 }
 		
 		/* factor in windup time with scaling factor */
@@ -180,9 +176,9 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		expected_vel->v[1] *= sf;
 		expected_vel->v[2] *= sf;
 		
-		if(i < 10) i++;
+		if(sf < 1.0) sf += 0.1;
 		 
-		get_Position(ri, current_location, expected_vel);
+		get_Position(ri, current_location, expected_vel, ROTATE);
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
 	} while (rot_amount > 0.1);  // once again, very very arbitrary
@@ -198,12 +194,14 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		output,
 		slope,
 		intercept,
+		sf,
 		upper_limit,
 		lower_limit,
 		theta_target,
 		distance_to_target,
 		tolerance;
-	int	bot_speed;
+	int	i,
+		bot_speed;
 	tolerance = 20.0;//adjustable.  How close should I be to the waypoint before moving onto the next one?
 	vector 	*current_location,
 		*expected_vel;
@@ -215,7 +213,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	reset_PID(fwdPID);
 		
  	//initialize start_x, start_y, start_theta
-	get_Position(ri, current_location, expected_vel);
+	get_Position(ri, current_location, expected_vel, FORWARD);
 	x_i = current_location->v[0];
 	y_i = current_location->v[1];
 	
@@ -229,24 +227,32 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	slope = get_slope(current_location->v[0], current_location->v[1], end_x, end_y);
 	intercept = get_intercept(slope, end_x, end_y);
 	tolerance = 5.0;
+	sf = 0.1;
+	i = 0;
+	
 	do {
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
-		setpoint = current_distance + distance_to_target;//make this a dynamic value
+		setpoint = current_distance + distance_to_target;
 		
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
-		/*
-		if((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit)) {
+		
+		//printf("Upper Lim = %f\tLower Lim = %f\n", upper_limit, lower_limit);
+		
+		if(((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit )) && i >=10) {
 			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 			rotate_to_theta(ri, theta_target, current_location);
 			
 			/* reset PID control for rest of move */
-			/*reset_PID(fwdPID);
-		}*/
+			reset_PID(fwdPID);
+			sf = 0.1;
+			i = 0;
+		}
 		
 		//move to reduce error at fill speed, then using PID in last 75 cm
 		if( distance_to_target <= 75 ) {
+			  printf("\n *********************  FWD PID ENABLED  ********************\n\n");
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
 			  output = Compute(fwdPID, current_distance, setpoint );
 			  printf("FWD PID Output = %f\n", output);
@@ -273,9 +279,18 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			expected_vel->v[1] = -1.0 * fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
 		}
 		
-   		//refresh current position values
-   		get_Position(ri, current_location, expected_vel);
-		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
+		expected_vel->v[0] *= sf;
+		expected_vel->v[1] *= sf;
+		
+		/* incriment scaling factor for expected velocites during wind up */
+		if (sf < 1.0) sf += 0.1;
+		i++;
+		
+		//refresh current position values and see if bot changed rooms.  If it does, reset scaling factor
+   		if( get_Position(ri, current_location, expected_vel, FORWARD) ) sf = 0.1;
+		
+		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
+		
 		
  	} while(fabs(distance_to_target) > tolerance);
 
@@ -299,7 +314,7 @@ int main(int argv, char **argc) {
 	robot_if_t ri;
 	//vector 	*location = (vector *)calloc(1, sizeof(vector));
 	float 	target_x,
-		target_y;		
+		target_y;
 	    
 	float waypoints[NUMBER_OF_WAYPOINTS][2] = WAYPOINT_COORDS;//WAYPOINT_COORDS;
 	int numWayPoints = NUMBER_OF_WAYPOINTS, index;
@@ -307,7 +322,7 @@ int main(int argv, char **argc) {
         // Setup the robot with the address passed in
         if(ri_setup(&ri, argc[1], 0)) printf("Failed to setup the robot!\n");
 	
-	if(ri_getHeadPosition(&ri) != RI_ROBOT_HEAD_MID ) ri_move(&ri, RI_HEAD_MIDDLE , 1);
+	if(ri_getHeadPosition(&ri) != RI_ROBOT_HEAD_LOW ) ri_move(&ri, RI_HEAD_DOWN , 1);
 	
 	// Check condition of battery, exit if not enough charge
 	//battery_check(&ri);
@@ -330,8 +345,8 @@ int main(int argv, char **argc) {
 	  target_y = waypoints[index][1];
 	  go_to_position(&ri, target_x, target_y);
 	  printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
-	  ri_move(&ri, RI_HEAD_UP , 1);
 	  ri_move(&ri, RI_HEAD_MIDDLE , 1);
+	  ri_move(&ri, RI_HEAD_DOWN , 1);
 	}
 	
 	free(fwdPID);
