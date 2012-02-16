@@ -7,7 +7,7 @@
 typedef struct _PID_ {
 	int	i;
 	double	errSum[8],
-		lastErr,
+		lastInput,
 		kp,
 		ki,
 		kd;

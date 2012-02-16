@@ -9,7 +9,7 @@
 /* DEFINES */
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 #define NUMBER_OF_WAYPOINTS 1 /*6*/
-#define WAYPOINT_COORDS {{0.0,100.0}}
+#define WAYPOINT_COORDS {{100.0,0}}
 //#define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 0.9
@@ -88,6 +88,8 @@ int rotSpeedScaling(float PIDout) {
 	else if (temp >= 3.0 && temp < 4.0) speed = 8;
 	else if (temp >= 2.0 && temp < 3.0) speed = 9;
 	else if (temp < 2.0) speed = 10;
+	
+	speed = 6;
 	
 	if(PIDout < 0) speed *= -1;
 	
@@ -241,8 +243,8 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			
 			/* reset PID control for rest of move */
 			/*reset_PID(fwdPID);
-		}
-		*/
+		}*/
+		
 		//move to reduce error at fill speed, then using PID in last 75 cm
 		if( distance_to_target <= 75 ) {
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
@@ -305,6 +307,8 @@ int main(int argv, char **argc) {
         // Setup the robot with the address passed in
         if(ri_setup(&ri, argc[1], 0)) printf("Failed to setup the robot!\n");
 	
+	if(ri_getHeadPosition(&ri) != RI_ROBOT_HEAD_MID ) ri_move(&ri, RI_HEAD_MIDDLE , 1);
+	
 	// Check condition of battery, exit if not enough charge
 	//battery_check(&ri);
 
@@ -326,6 +330,8 @@ int main(int argv, char **argc) {
 	  target_y = waypoints[index][1];
 	  go_to_position(&ri, target_x, target_y);
 	  printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
+	  ri_move(&ri, RI_HEAD_UP , 1);
+	  ri_move(&ri, RI_HEAD_MIDDLE , 1);
 	}
 	
 	free(fwdPID);
