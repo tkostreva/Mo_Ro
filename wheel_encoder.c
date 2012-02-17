@@ -44,8 +44,8 @@ void setup_WE_transforms(vector *v){
 float get_we_X(we_stance *s) {
 	float avg;
 	//print_we(s);
-	avg = s->right_tot * sin(60.0 / 180.0 * M_PI);
-	avg += s->left_tot * sin(120.0 / 180.0 * M_PI);
+	avg = (float)s->right_delta * sin(60.0 / 180.0 * M_PI);
+	avg += (float)s->left_delta * sin(120.0 / 180.0 * M_PI);
 	avg /= 2.0;
 	avg /= WE_TICKS_PER_CM;
 	//printf("Avg = %f\n", avg);
@@ -56,16 +56,35 @@ float get_we_X(we_stance *s) {
 // Currently Reports LEFT/RIGHT distance from TOTALS
 float get_we_Y(we_stance *s) {
 	float avg;
-	printf("r_delta = %d\tl_delta = %d\n", s->right_tot, s->left_tot);
-	avg = s->right_tot * cos(60.0 / 180.0 * M_PI);
-	avg += s->left_tot * cos(120.0 / 180.0 * M_PI);
+	//printf("r_delta = %d\tl_delta = %d\n", s->right_tot, s->left_tot);
+	avg = (float)s->right_delta * cos(60.0 / 180.0 * M_PI);
+	avg += (float)s->left_delta * cos(120.0 / 180.0 * M_PI);
 	avg /= 2.0;
 	
-	return 0.0;	
+	avg /= WE_TICKS_PER_CM;
+	
+	return avg;
 }
 
 // Report Theta in radians for total change of back WE since last update
 float get_we_Theta(we_stance *s) {
+	float theta;
+	
+	/* get transformed difference between wheel encoders */
+	/*theta = (float)s->right_tot * sin(60.0 / 180.0 * M_PI);
+	theta -= (float)s->left_tot * sin(120.0 / 180.0 * M_PI);
+	theta /= WE_TICKS_PER_CM;
+	*/
+	theta = s->back_tot / -48.0;
+	
+	//theta = s->back_tot / WE_TICKS_PER_CM;
+	
+	//theta /= -(5.0 * M_PI);
+  
+	return theta;
+}
+
+float get_turning_theta(we_stance *s) {
 	float theta;
 	printf("Back Total = %d\n", s->back_tot);
 	
@@ -109,7 +128,8 @@ void transform_WE(we_stance *s, vector *ws){
 	      update_t,
 	      cos_t,
 	      sin_t;
-	vector working_vector;	    
+	vector 	working_vector,
+		result;    
 
 	theta = get_we_Theta(s);
 	update_t = theta + we_shift_vector->v[2];
@@ -128,9 +148,15 @@ void transform_WE(we_stance *s, vector *ws){
 	working_vector.v[2] = theta;
 	
 	/* rotate current vector */
-	MultMatVec(we_rot_matrix, &working_vector, ws);
+	MultMatVec(we_rot_matrix, &working_vector, &result);
 	
 	/* add to shift vector */
+	AddVectors(we_shift_vector, &result, ws);
+	
+	/* update shift vector with current ws as running total */
+	we_shift_vector->v[0] = ws->v[0];
+	we_shift_vector->v[1] = ws->v[1];
+	we_shift_vector->v[2] = ws->v[2];	
 }
 
 void print_we(we_stance *s) {
