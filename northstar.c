@@ -51,10 +51,10 @@ void setup_NS_transforms(ns_stance *s) {
 	
 	//initialize ns_rot_matrix
 	ns_rot_matrix->v[0][0] = cos(rot_theta);
-	ns_rot_matrix->v[0][1] = -1.0 * sin(rot_theta);
+	ns_rot_matrix->v[0][1] = sin(rot_theta);
 	ns_rot_matrix->v[0][2] = 0.0;
 	
-	ns_rot_matrix->v[1][0] = sin(rot_theta);
+	ns_rot_matrix->v[1][0] = -1.0 * sin(rot_theta);
 	ns_rot_matrix->v[1][1] = cos(rot_theta);
 	ns_rot_matrix->v[1][2] = 0.0;
 	

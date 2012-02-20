@@ -129,8 +129,8 @@ void transform_WE(we_stance *s, vector *ws){
 	
 	/* update rotation matrix based on bots current wheel encoder theta */
 	we_rot_matrix->v[0][0] = cos_t;
-	we_rot_matrix->v[0][1] = sin_t;
-	we_rot_matrix->v[1][0] = -1.0 * sin_t;
+	we_rot_matrix->v[0][1] = -1.0 * sin_t;
+	we_rot_matrix->v[1][0] = sin_t;
 	we_rot_matrix->v[1][1] = cos_t;
 	
 	/* get wheel encoder reported distances in prep for rotation */

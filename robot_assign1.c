@@ -7,8 +7,8 @@
 #include "PID_Control.h"
 
 /* DEFINES */
-#define WAYPOINT_COORDS {{171.45, 0.0},{171.45, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
-#define NUMBER_OF_WAYPOINTS 7 /*6 {342.9, 0.0}*/
+#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
+#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
 //#define NUMBER_OF_WAYPOINTS 1
 
@@ -20,7 +20,7 @@
 #define R_Ki 0.5
 #define R_Kd 0.20
 
-#define LANE_LIMIT 20.0
+#define LANE_LIMIT 25.0
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
 
 /* GLOBALS */
@@ -293,7 +293,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
 		
 		
- 	} while((fabs(distance_to_target) > tolerance) && (!ri_IR_Detected(ri)));
+ 	} while((fabs(distance_to_target) > tolerance) ); // && (!ri_IR_Detected(ri)));
 
  	//point robot to end theta using PID //code me
  	free(current_location);
@@ -342,10 +342,12 @@ int main(int argv, char **argc) {
 		target_x = waypoints[index][0];
 		target_y = waypoints[index][1];
 		go_to_position(&ri, target_x, target_y);
+		/*
 		if(!ri_IR_Detected(&ri)) {
 			printf("I found an obstacle!  Stopping!\n\n");
 			exit(-10);
 		}
+		*/
 		printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
 		//ri_move(&ri, RI_HEAD_MIDDLE , 1);
 		//ri_move(&ri, RI_HEAD_DOWN , 1);

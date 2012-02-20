@@ -43,8 +43,8 @@ void filter_flush(robot_if_t *ri) {
 	int i;
 	
 	for(i = 0; i < DEEP_TAPS - 1; i++) {
-		fir_Filter(f[0], (float)ri_getX(ri), DEEP_FILTER);
-		fir_Filter(f[1], (float)ri_getY(ri), DEEP_FILTER);
+		fir_Filter(f[0], (float)ri_getX(ri), SHALLOW_FILTER);
+		fir_Filter(f[1], (float)ri_getY(ri), SHALLOW_FILTER);
 		fir_Filter(f[2], ri_getTheta(ri), SHALLOW_FILTER);
 		fir_Filter(f[3], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_LEFT ), SHALLOW_FILTER);
 		fir_Filter(f[4], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_RIGHT ), SHALLOW_FILTER);
@@ -56,8 +56,8 @@ void filter_flush(robot_if_t *ri) {
 }
 
 void get_filtered(robot_stance *s, robot_if_t *ri){
-	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
-	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
+	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, SHALLOW_FILTER);
+	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, SHALLOW_FILTER);
 	s->ns_f->theta		= s->ns->theta; //(fir_Filter(f[2], s->ns->theta, SHALLOW_FILTER) + s->ns->theta) / 2.0;
 	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
 	s->ns_f->room		= s->ns->room;
