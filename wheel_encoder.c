@@ -86,7 +86,7 @@ float get_we_Theta(we_stance *s) {
 	theta = atan( d_we / 23.4 );
 	
 	/* invert theta to match our coordinate system */
-	theta *= -1.0;
+	//theta *= -1.0;
   
 	return theta;
 }
@@ -105,9 +105,9 @@ void prepare_to_turn(robot_if_t *ri, vector *v){
 /* update the shift and rotation vectors for wheel encoders from waypoint */
 void finish_turn(robot_if_t *ri, vector *v) {
 	we_rot_matrix->v[0][0] = cos(v->v[2]);
-	we_rot_matrix->v[0][1] = sin(v->v[2]);
+	we_rot_matrix->v[0][1] = -1.0 * sin(v->v[2]);
 		
-	we_rot_matrix->v[1][0] = -1.0 * sin(v->v[2]);
+	we_rot_matrix->v[1][0] = sin(v->v[2]);
 	we_rot_matrix->v[1][1] = cos(v->v[2]);
 	
 	ri_reset_state(ri);
