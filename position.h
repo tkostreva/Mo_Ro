@@ -17,6 +17,11 @@
 // Set DATA_COLLECT to 1 supress normal output and dump data for csv files
 #define DATA_COLLECT 0
 
+enum move_type {
+	FORWARD,
+	ROTATE
+};
+
 typedef struct _robot_stance_ {
 	ns_stance *ns;		// Raw North Star Data 
 	ns_stance *ns_f;	// Filtered North Star Data
@@ -41,8 +46,8 @@ float delta_theta(float current_theta, float previous_theta);
 
 void init_pos(robot_if_t *ri);		//sets up initial coordinates
 
-/* get filtered data from NS and WE and filtered again with Kalman */
-void get_Position(robot_if_t *ri, vector *loc, vector *vel);
+/* Get Position of bot, stored in vector loc, feed kalman filter expected velocities, reports a room change */
+int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t);
 
 int NS_theta_cal(robot_if_t *ri, vector *u);
 

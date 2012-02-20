@@ -21,6 +21,10 @@ $ git commit -a -m 'your message here'
 $ git remote add origin git@github.com:tkostreva/Mo_Ro
 
 -- THEN --
-// this will update the repository with your code
+
+// Pull from remote to update your commit with any changes anyone else has made
+$git pull origin master
+
+// then update the REMOTE repository with your code
 
 $ git push origin master

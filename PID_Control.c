@@ -12,7 +12,7 @@ void init_PID(PID *p, double Kp, double Ki, double Kd) {
 
 void reset_PID(PID *p){
 	int j;
-	p->lastErr = 0.0;
+	p->lastInput = 0.0;
 	
 	for(j = 0; j < 8; j++) p->errSum[j] = 0.0;
 	
@@ -22,7 +22,7 @@ void reset_PID(PID *p){
 
 double Compute(PID *p, double Input, double Setpoint) {
 	double 	error,
-		dErr,
+		dInput,
 		sum,
 		Output,
 		dt;
@@ -39,18 +39,18 @@ double Compute(PID *p, double Input, double Setpoint) {
 	/*Compute all the working error variables*/
 	error = Setpoint - Input;
 	p->errSum[p->i] = error * dt;
-	dErr = (error - p->lastErr) / dt;
+	dInput = (Input - p->lastInput) / dt;
 	
 	sum = 0.0;
 	for(j = 0; j < 8; j++) sum += p->errSum[j];
 
-	printf("dt = %f\terror = %f\terrSum = %f\tdErr = %f\n", dt, error, sum, dErr);
+	printf("dt = %f\terror = %f\terrSum = %f\tdInput = %f\n", dt, error, sum, dInput);
 	
 	/*Compute PID Output*/
-	Output = (p->kp * error) + (p->ki * sum) + (p->kd * dErr);
+	Output = (p->kp * error) + (p->ki * sum) - (p->kd * dInput);
 
 	/*Remember some variables for next time*/
-	p->lastErr = error;
+	p->lastInput = Input;
 	p->lastTime.tv_sec = now.tv_sec;
 	p->lastTime.tv_nsec = now.tv_nsec;	
 	p->i++;

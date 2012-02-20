@@ -43,8 +43,8 @@ void filter_flush(robot_if_t *ri) {
 	int i;
 	
 	for(i = 0; i < DEEP_TAPS - 1; i++) {
-		fir_Filter(f[0], (float)ri_getX(ri), DEEP_FILTER);
-		fir_Filter(f[1], (float)ri_getY(ri), DEEP_FILTER);
+		fir_Filter(f[0], (float)ri_getX(ri), SHALLOW_FILTER);
+		fir_Filter(f[1], (float)ri_getY(ri), SHALLOW_FILTER);
 		fir_Filter(f[2], ri_getTheta(ri), SHALLOW_FILTER);
 		fir_Filter(f[3], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_LEFT ), SHALLOW_FILTER);
 		fir_Filter(f[4], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_RIGHT ), SHALLOW_FILTER);
@@ -56,14 +56,14 @@ void filter_flush(robot_if_t *ri) {
 }
 
 void get_filtered(robot_stance *s, robot_if_t *ri){
-	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
-	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
-	s->ns_f->theta		= fir_Filter(f[2], s->ns->theta, SHALLOW_FILTER);
+	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, SHALLOW_FILTER);
+	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, SHALLOW_FILTER);
+	s->ns_f->theta		= s->ns->theta; //(fir_Filter(f[2], s->ns->theta, SHALLOW_FILTER) + s->ns->theta) / 2.0;
 	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
 	s->ns_f->room		= s->ns->room;
 	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, SHALLOW_FILTER);
 	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, SHALLOW_FILTER);
-	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_tot, SHALLOW_FILTER);
+	s->we_f->back_tot	= s->we->back_tot; //((int)fir_Filter(f[5], (float)s->we->back_tot, SHALLOW_FILTER) + s->we->back_tot) / 2;
 }
 
 // use this to report ACTUAL difference between last theta and current theta ( prevent wrap around )
@@ -77,44 +77,9 @@ float delta_theta(float current_theta, float previous_theta) {
 	// check to see if reported theta wrapped around
 	if(d_theta > M_PI) d_theta = 2.0 * M_PI - d_theta; // theta wrapped from -PI to PI
 		
-	if(d_theta < M_PI) d_theta = -2.0 * M_PI - d_theta; // theta wrapped from PI to -PI	
+	if(d_theta < -M_PI) d_theta = -2.0 * M_PI - d_theta; // theta wrapped from PI to -PI	
 		
 	return d_theta;	
-}
-
-float turn_to(){
-	float d_theta;
-	
-	d_theta = delta_theta(current->kalmanFiltered->v[2], previous->kalmanFiltered->v[2]);
-	printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
-	        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
-	return d_theta;
-}
-
-/*int check_rotation(int rot){
-	//check for right rotation
-	if (rot == 0){
-		if (current->kalmanFiltered->v[2] < previous->kalmanFiltered->v[2])
-			return 1;
-		else
-			return 0;
-	}
-	else{
-		if (current->kalmanFiltered->v[2] > previous->kalmanFiltered->v[2])
-			return 1;
-		else
-			return 0;
-		
-	}
-	
-}*/
-void update_theta(char *s){
-	//update previous kalman filter theta data
-	previous->kalmanFiltered->v[2] = current->kalmanFiltered->v[2];
-	//printf("-----------------Robot Turning %s---------------------------\n",s);
-	//printf("Previous theta = %f/t Current theta = %f\t Delta theta = %f\n",
-	//        previous->kalmanFiltered->v[2], current->kalmanFiltered->v[2],d_theta);
-	//return d_theta;
 }
 
 // Create a Robot Stance structure and allocate memory for pointers
@@ -128,7 +93,7 @@ robot_stance *create_stance(){
 	rs->we_f = (we_stance *) calloc(1, sizeof(we_stance));
 	
 	rs->nsTranslated = (vector *)malloc(sizeof(vector));
-	rs->weTranslated = (vector *)malloc(sizeof(vector));
+	rs->weTranslated = (vector *)calloc(1, sizeof(vector));
 	rs->kalmanFiltered = (vector *)malloc(sizeof(vector));
 	
 	return rs;
@@ -184,8 +149,10 @@ void init_pos(robot_if_t *ri){
 	//printf("Initial NS_F = ");
 	//print_ns(initial->ns_f);
 	
-	// Setup Northstar Transform matrices based on intial position
+	// Setup Northstar and Wheel Encoder Transform matrices based on intial position
 	setup_NS_transforms(initial->ns_f);
+	setup_WE_transforms(initial->weTranslated);
+	
 	//printf("Initial Kalman Theta = %f \n", initial->kalmanFiltered->v[2]);
 	
 	// Copy Initial into current and previous to initialize them
@@ -216,6 +183,7 @@ void update_pos(robot_if_t *ri){
 	filter_flush(ri);
 	
 	setup_NS_transforms(current->ns_f);
+	setup_WE_transforms(current->kalmanFiltered);
 	
 	/* reset room switch if it was used */
 	room_switch->v[0] = 0.0;
@@ -242,21 +210,43 @@ void room_change(robot_if_t *ri){
 	room_switch->v[2] = previous->nsTranslated->v[2];
 }
 
-void get_Position(robot_if_t *ri, vector *loc, vector *vel){
-	//float loc_wo_kalman[3];
-		
+int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
+	static int lastmove;
+	float d_theta;
+	int room_changed = 0;
 	// copy current stance into previous
 	copy_stance(current, previous);
-		  
+	
 	update_sensor_data(ri);
 	get_stance(current, ri);
 	
 	// check for room change
-	if (current->ns->room != previous->ns->room) room_change(ri);
+	if (current->ns->room != previous->ns->room) {
+	  room_change(ri);
+	  room_changed = 1;
+	}
+	/* check to see if move type is changing from forward to rotate
+	 * to prepare Wheel Encoders to Rotate */
+	if( lastmove == FORWARD && m_t == ROTATE ) {
+		prepare_to_turn(ri, previous->weTranslated);
+	}
+	
+	/* check to see if move type is changing from rotate to forward
+	 * to prepare wheel encoder shifts and rotation transforms */
+	if( lastmove == ROTATE && m_t == FORWARD ) {
+		void finish_turn(ri, previous->weTranslated);
+	}
+	
+	// Prevent NS Wrap Around  NO NORTHSTAR THETA FILTERING //
+	//printf("Theta_curr = %f\tTheta_prev = %f\t", current->ns->theta, previous->ns->theta);
+	d_theta = delta_theta(current->ns->theta, previous->ns->theta);
+	//printf("Delta theta NS = %f\n", d_theta);
+	current->ns_f->theta = d_theta + previous->ns_f->theta;
 	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
-	transform_WE(current->we, current->weTranslated, previous->weTranslated->v[2]);
+	if(m_t == ROTATE) get_turning_theta(current->we, current->weTranslated);
+	else transform_WE(current->we, current->weTranslated);
 
 	// Shift nsTranslated with room switch vector and last kalman
 	current->nsTranslated->v[0] += room_switch->v[0] + last->kalmanFiltered->v[0];
@@ -268,7 +258,6 @@ void get_Position(robot_if_t *ri, vector *loc, vector *vel){
 	current->weTranslated->v[1] += last->kalmanFiltered->v[1];
 	current->weTranslated->v[2] += last->kalmanFiltered->v[2];
 	
-#if (!DATA_COLLECT)	
 	//diagnostic
 	printf("NS Translation Result = ");
 	PrintVector(current->nsTranslated);
@@ -276,7 +265,7 @@ void get_Position(robot_if_t *ri, vector *loc, vector *vel){
 	//diagnostic
 	printf("WE Translation Result = ");
 	PrintVector(current->weTranslated);
-#endif
+
 	//  Old average of both transforms
 	/*loc_wo_kalman[0] = ( current->nsTranslated->v[0] + current->weTranslated->v[0] ) / 2.0;
 	loc_wo_kalman[1] = ( current->nsTranslated->v[1] + current->weTranslated->v[1] ) / 2.0;
@@ -290,7 +279,11 @@ void get_Position(robot_if_t *ri, vector *loc, vector *vel){
 	// Report kalman filtered values
 	loc->v[0] = current->kalmanFiltered->v[0];
 	loc->v[1] = current->kalmanFiltered->v[1];
-	loc->v[2] = current->kalmanFiltered->v[2];	
+	loc->v[2] = current->kalmanFiltered->v[2];
+	
+	lastmove = m_t; // track last state of move type
+	
+	return room_changed;
 }
 
 /* Function for gathering Northstar data and returning it in vector u */
@@ -308,6 +301,7 @@ int NS_theta_cal(robot_if_t *ri, vector *u){
 // Deep copy of robot stance object
 void copy_stance(robot_stance *original, robot_stance *copy){
 	// deep copy room id data
+	copy->ns->theta		= original->ns->theta;
 	copy->ns->room 		= original->ns->room;
 	copy->ns_f->room 	= original->ns_f->room;
 	
@@ -375,4 +369,5 @@ void exit_pos(){
 	free(kfilter);
 	
 	exit_ns();
+	exit_we();
 }
