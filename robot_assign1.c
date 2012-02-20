@@ -176,6 +176,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		expected_vel->v[1] *= sf;
 		expected_vel->v[2] *= sf;
 		
+		/* increment scaling factor */
 		if(sf < 1.0) sf += 0.1;
 		 
 		get_Position(ri, current_location, expected_vel, ROTATE);
