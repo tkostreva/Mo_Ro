@@ -68,7 +68,6 @@ void get_filtered(robot_stance *s, robot_if_t *ri){
 
 // use this to report ACTUAL difference between last theta and current theta ( prevent wrap around )
 float delta_theta(float current_theta, float previous_theta) {
-	int sign;
 	float d_theta;
 	
 	// find delta theta and get it's absolute value
@@ -76,15 +75,10 @@ float delta_theta(float current_theta, float previous_theta) {
 	//if(d_theta < 0.0) d_theta *= -1.0;
 	
 	// check to see if reported theta wrapped around
-	if(d_theta > M_PI){
-		// get sign of last theta to check direction of wrap
-		if(  previous_theta < 0 ) sign = -1;
-		else sign = 1;
+	if(d_theta > M_PI) d_theta = 2.0 * M_PI - d_theta; // theta wrapped from -PI to PI
 		
-		// correct change in theta by 2 * PI
-		d_theta = sign * ( d_theta - ( 2.0 * M_PI )); 
-	}
-	
+	if(d_theta < M_PI) d_theta = -2.0 * M_PI - d_theta; // theta wrapped from PI to -PI	
+		
 	return d_theta;	
 }
 

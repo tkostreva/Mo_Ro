@@ -21,8 +21,7 @@ void get_ns(ns_stance *s, robot_if_t *ri ) {
 	s->y = ri_getY(ri);
 	s->theta = ri_getTheta(ri);
 	s->sig =  ri_getNavStrengthRaw(ri);
-	s->room = ri_getRoomID(ri);
-	
+	s->room = ri_getRoomID(ri);	
 }
 
 // Setup the transformation matrices with values stored in NS stance s
@@ -105,7 +104,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	//PrintVector(&working_vector_2);
 	
 	//scale
-	// Update Scaling Matrix based on current signal strength
+	// Update Scaling Matrix based on current signal strength [NOT WORKING RIGHT]
 
 	if(s->sig > 4000) {
 		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
@@ -113,7 +112,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	}
 	else {  // currently keeping scaling factor at 45 per cm when signal strength is high and scaling down to 60 per cm when signal strength is low
 		  scale_matrix->v[0][0] = 1.0 / ( 0.001875 * s->sig + 16.0742 );
-		  scale_matrix->v[1][1] = 1.0 / ( -0.0048 * s->sig + 84.6228 );		  
+		  scale_matrix->v[1][1] = 1.0 / ( -0.0048 * s->sig + 84.6228 );
 	}
 	
 	MultMatVec(scale_matrix, &working_vector_2, ns);

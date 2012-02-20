@@ -14,9 +14,9 @@
 #define F_Kd 0.09
 #define F_Ki 0.01
 
-#define R_Kp 3.0
-#define R_Kd 0.3
-#define R_Ki 0.03
+#define R_Kp 0.5
+#define R_Kd 0.05
+#define R_Ki 0.005
 
 #define LANE_LIMIT 14.5  /* currently the radius of the bot in [cm] */
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
@@ -74,7 +74,7 @@ float get_intercept(float m, float end_x, float end_y){
 /* current_theta-get_theta_to_target() = theta to correct */
 float get_theta_to_target(float start_x, float start_y, float end_x, float end_y){
 	//this needs to be made more robust... what happens after it turns around?
-
+  
  	float theta_to_target = atan( (end_y - start_y) / (end_x-start_x) );
 	if( end_x < start_x ){//its gonna be outside of the range of arctan//this heuristic isnt perfect--> consider negative motion
    		if( end_y  > start_y){
@@ -97,22 +97,22 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		test;
 	int  	ang_vel;
 	vector *expected_vel;
-
+	
 	/* reset PID control for this rotation */
 	reset_PID(rotPID);
-
+	
 	expected_vel = (vector *)calloc(1, sizeof(vector));
-
+	
 	rot_amount = target_theta - current_location->v[2];
-
+	
 	do {
 		 output = Compute(rotPID, current_location->v[2], rot_amount);
 		 printf("Rotate PID Output = %f\n", output);
-
+		 
 		 // correlate output to an angular velocity this is a crappy substitute
 		 if(output > 0) ang_vel = 6;
 		 else ang_vel = -6;
-
+		 
 		 if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
 			expected_vel->v[0] = NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
@@ -132,14 +132,14 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		 if(output < 0.0) test = -1.0 * output;
 		 else test = output;
 	} while (test > 10);  // once again, very very arbitrary
-
+	
 	free(expected_vel);
 }
 
 int fwdSpeedScaling(float PIDout) {
 	int 	temp,
 		speed;
-
+	
 	temp = (int) PIDout;
 	temp = abs(temp);
 
@@ -166,7 +166,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		upper_limit,
 		lower_limit,
 		theta_target,
-		tolerance=3.0;
+		tolerance;
 	int	bot_speed;
 	vector 	*current_location,
 		*expected_vel;
@@ -196,39 +196,36 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	intercept = get_intercept(slope, end_x, end_y);
 
 	do {
-		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);//make this a dynamic value
-
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
-
+		tolerance = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
+		distance_to_target = current_distance + tolerance;//make this a dynamic value
+		
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
-
+		/*
 		if((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit)) {
 			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 			rotate_to_theta(ri, theta_target, current_location);
-
+			
 			/* reset PID control for rest of move */
-			reset_PID(fwdPID);
+			/*reset_PID(fwdPID);
 		}
-
-		//move to reduce error at fill speed, then using PID in final quarter
-		if( current_distance >= 0.25 * distance_to_target ) {
-
+		*/
 		//move to reduce error at fill speed, then using PID in last 75 cm
-		if( 75 >= distance_to_target ) {
+		if( tolerance <= 75 ) {
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
 			  output = Compute(fwdPID, current_distance, distance_from_start_to_target );
 			  printf("FWD PID Output = %f\n", output);
-
+			  
 			  // correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
-
+			  
 			  // shitty patch until we figure out correlation
 			  /*if(output < 0) bot_speed = -RI_SLOWEST;
 			  else bot_speed = RI_SLOWEST;*/
 			  bot_speed = fwdSpeedScaling(output);
 		}
 		else bot_speed = RI_FASTEST;
-
+		
 		// move the bot based on bot_speed and define expected velocities for kalman filter
 		if(bot_speed > 0) {
 			ri_move(ri, RI_MOVE_FORWARD, bot_speed);
@@ -241,12 +238,12 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			expected_vel->v[0] = -1.0 * fwd_speed[bot_speed - 1] * cos(current_location->v[2]);
 			expected_vel->v[1] = -1.0 * fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
 		}
-
+		
    		//refresh current position values
    		get_Position(ri, current_location, expected_vel);
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);
-
- 	} while(fabs(distance_to_target) > tolerance);
+		
+ 	} while(tolerance > 5);
 
  	//point robot to end theta using PID //code me
  	free(current_location);
@@ -259,7 +256,7 @@ void battery_check( robot_if_t *ri ) {
 	if( ri_getBattery(ri) < RI_ROBOT_BATTERY_HOME ) {
 		printf("Charge me please!!!");
 		exit(11);
-	}
+	}	
 }
 
 /* MAIN */
@@ -271,7 +268,7 @@ int main(int argv, char **argc) {
 		target_y,
 		scalar_target_dist,
 		d_theta;
-
+	    
 	float waypoints[NUMBER_OF_WAYPOINTS][2] = WAYPOINT_COORDS;//WAYPOINT_COORDS;
 	int numWayPoints = NUMBER_OF_WAYPOINTS, index;
 	// Make sure we have a valid command line argument
@@ -279,11 +276,11 @@ int main(int argv, char **argc) {
                 printf("Usage: robot_test <address of robot> <distance to travel in X in cm> <distance to travel in Y in cm>\n");
                 exit(-1);
         }
-
+        
         // Setup the robot with the address passed in
         if(ri_setup(&ri, argc[1], 0))
                 printf("Failed to setup the robot!\n");
-
+	
 	// Check condition of battery, exit if not enough charge
 	//battery_check(&ri);
 
@@ -292,12 +289,12 @@ int main(int argv, char **argc) {
 	rotPID = calloc(1, sizeof(PID));
 	init_PID(fwdPID, F_Kp, F_Ki, F_Kd);
 	init_PID(rotPID, R_Kp, R_Ki, R_Kd);
-
+	
 	// Retrieve target distance from command line
 	target_x = (float) atoi(argc[2]);
 	target_y = (float) atoi(argc[3]);
 	//scalar_target_dist = get_euclidian_distance(0.0, 0.0, target_x, target_y);
-
+			
 	// Retrieve initial position, initailize current and last
 	init_pos(&ri);
 
@@ -319,7 +316,7 @@ int main(int argv, char **argc) {
 		// Bad attempt at PID
 			d_theta = turn_to();
 			//printf("Delta Theta = %f\n", d_theta);
-
+			
 			// Straigten out robot if neccessary
 			if ( d_theta > 0.07 ) {
 				ri_move(&ri, RI_TURN_RIGHT, 6);
@@ -328,14 +325,14 @@ int main(int argv, char **argc) {
 				printf("-----------------Robot Turning Right---------------------------\n");
 				/*while (1){
 					get_Position(&ri, location);
-
+					
 					//check right rotation
 					if (check_rotation(0) == 1)
 						break;
 					ri_move(&ri, RI_TURN_RIGHT, 6);
 					d_theta = turn_to();
 				}*/
-	/*
+	/*				
 				update_theta("Right");
 			}
 			else if ( d_theta < -0.07) {
@@ -345,7 +342,7 @@ int main(int argv, char **argc) {
 				printf("-----------------Robot Turning Left---------------------------\n");
 				/*while (1){
 					get_Position(&ri, location);
-
+					
 					//check left rotation
 					if (check_rotation(1) == 1)
 						break;
@@ -371,8 +368,8 @@ int main(int argv, char **argc) {
 			}
 			*/
 	/*	}
-
-
+		
+					
 		get_Position(&ri, location);
 #if (DATA_COLLECT)
 		print_stance_csv();
@@ -382,14 +379,14 @@ int main(int argv, char **argc) {
 #endif
         } while(location->v[1] > target_x);
 
-
+	
 	free(location);
-
+	
 	*/
 	free(fwdPID);
 	free(rotPID);
-
+	
 	exit_pos();
-
+	
 	return 0;
 }
