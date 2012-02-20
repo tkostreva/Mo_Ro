@@ -24,8 +24,12 @@ void setup_WE_transforms(vector *v);
 
 void transform_WE(we_stance *s, vector *ws);
 
+void get_turning_theta(we_stance *s, vector *ws);
+
+/* set up a waypoint for wheel encoder at turn location */
 void prepare_to_turn(robot_if_t *ri, vector *v);
 
+/* update the shift and rotation vectors for wheel encoders from waypoint */
 void finish_turn(robot_if_t *ri, vector *v);
 
 void print_we(we_stance *s);

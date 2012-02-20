@@ -1,3 +1,11 @@
+/*	Been trying to update the wheel encoder section to use WE deltas instead of totals.  The totals are messing us up.
+ *	Our old transform kept looking at the total distance traveled by the wheel encoders straigh ahead and then rotating it
+ *  from the START POINT, which gave us very very very inaccurate wheel encoder results if we were anywhere off the straight ahead
+ *	"X Axis."  I am trying to make is so that wheel encoders keep a running total of vectors between each sensor update to track
+ *	a more accurate wheel encoder path.  I am also trying to migrate turning into it's own fuction so that turns to do not royally screw
+ *	the wheel encoder results (get to turn -> update the shift vector -> reset the wheel encoder totals -> turn -> go from that point)
+ */
+
 #include "wheel_encoder.h"
 
 vector *we_shift_vector;
@@ -66,33 +74,19 @@ float get_we_Y(we_stance *s) {
 	return avg;
 }
 
-// Report Theta in radians for total change of back WE since last update
+/* Using difference between front wheel encoders to track the deviation from straight-ish theta for use in "go to" portion*/
 float get_we_Theta(we_stance *s) {
-	float theta;
+	float 	d_we,	/* delta between front wheel encoders */
+			theta;	
 	
-	/* get transformed difference between wheel encoders */
-	/*theta = (float)s->right_tot * sin(60.0 / 180.0 * M_PI);
-	theta -= (float)s->left_tot * sin(120.0 / 180.0 * M_PI);
-	theta /= WE_TICKS_PER_CM;
-	*/
-	theta = s->back_tot / -48.0;
+	/* get transformed difference between front wheel encoders to see difference in CM */
+	/* using deltas since we have a running total in tranform_WE() */
+	d_we = ((float)s->left_delta - (float)s->right_delta) / WE_TICKS_PER_CM;
+	/* get angle bot has changed by inv tan of d_we / DIST BETWEEN FRONT WHEELS [measured at 23.4 cm] */
+	theta = atan( d_we / 23.4 );
 	
-	//theta = s->back_tot / WE_TICKS_PER_CM;
-	
-	//theta /= -(5.0 * M_PI);
-  
-	return theta;
-}
-
-float get_turning_theta(we_stance *s) {
-	float theta;
-	printf("Back Total = %d\n", s->back_tot);
-	
-	theta = s->back_tot / -48.0;
-	
-	//theta = s->back_tot / WE_TICKS_PER_CM;
-	
-	//theta /= -(5.0 * M_PI);
+	/* invert theta to match our coordinate system */
+	theta *= -1.0;
   
 	return theta;
 }
@@ -108,8 +102,6 @@ void prepare_to_turn(robot_if_t *ri, vector *v){
 	ri_reset_state(ri);
 }
 
-/* WE NEED A TRANSFORM WE SPECIFICALLY FOR TURNING !!!! */
-
 /* update the shift and rotation vectors for wheel encoders from waypoint */
 void finish_turn(robot_if_t *ri, vector *v) {
 	we_rot_matrix->v[0][0] = cos(v->v[2]);
@@ -118,18 +110,17 @@ void finish_turn(robot_if_t *ri, vector *v) {
 	we_rot_matrix->v[1][0] = -1.0 * sin(v->v[2]);
 	we_rot_matrix->v[1][1] = cos(v->v[2]);
 	
-	/* update shift vector with kalman data????*/
-	
 	ri_reset_state(ri);
 }
 
+/* return a transformed WE vector for use in the Kalman filter */
 void transform_WE(we_stance *s, vector *ws){
 	float theta,
 	      update_t,
 	      cos_t,
 	      sin_t;
 	vector 	working_vector,
-		result;    
+			result;    
 
 	theta = get_we_Theta(s);
 	update_t = theta + we_shift_vector->v[2];
@@ -150,13 +141,38 @@ void transform_WE(we_stance *s, vector *ws){
 	/* rotate current vector */
 	MultMatVec(we_rot_matrix, &working_vector, &result);
 	
-	/* add to shift vector */
+	/* add result to shift vector, put results in reporting vector ws */
 	AddVectors(we_shift_vector, &result, ws);
 	
 	/* update shift vector with current ws as running total */
 	we_shift_vector->v[0] = ws->v[0];
 	we_shift_vector->v[1] = ws->v[1];
 	we_shift_vector->v[2] = ws->v[2];	
+}
+
+/* Using totals from all three wheel encoders ONLY when we are ordering a "turn to" */
+/* Left and right WE are 13.5 cm from center of rotation, back WE is 15 cm from center */
+void get_turning_theta(we_stance *s, vector *ws) {
+	float	l_theta,  /* left, right, and back thetas */
+			r_theta,
+			b_theta,
+			avg_theta;
+	
+	/* theta a wheel travels through is the distance traveled along outside diameter [in cm] / radius in cm */
+	l_theta = (float)s->left_tot / WE_TICKS_PER_CM / 13.5;
+	r_theta = (float)s->right_tot / WE_TICKS_PER_CM / 13.5;
+	b_theta = (float)s->back_tot / WE_TICKS_PER_CM / 15.0;
+	
+	/* for right rotation, left WE increases, right WE decreases, back WE increases;  opposite for left rotation */
+	/* following formula properly sums thetas */
+	avg_theta = (l_theta - r_theta + b_theta) / 3.0;
+	
+	/* make avg_theta conform to our coordinate system */
+	avg_theta *= -1.0;
+  
+	ws->v[0] = we_shift_vector->v[0];
+	ws->v[1] = we_shift_vector->v[1];
+	ws->v[2] = we_shift_vector->v[2] + avg_theta;
 }
 
 void print_we(we_stance *s) {

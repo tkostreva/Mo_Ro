@@ -228,13 +228,13 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	/* check to see if move type is changing from forward to rotate
 	 * to prepare Wheel Encoders to Rotate */
 	if( lastmove == FORWARD && m_t == ROTATE ) {
-		
+		prepare_to_turn(ri, previous->weTranslated);
 	}
 	
 	/* check to see if move type is changing from rotate to forward
 	 * to prepare wheel encoder shifts and rotation transforms */
 	if( lastmove == ROTATE && m_t == FORWARD ) {
-	  
+		void finish_turn(ri, previous->weTranslated);
 	}
 	
 	// Prevent NS Wrap Around  NO NORTHSTAR THETA FILTERING //
@@ -245,7 +245,8 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	
 	// Transforms occur here
 	transform_NS(current->ns_f, current->nsTranslated);
-	transform_WE(current->we_f, current->weTranslated);
+	if(m_t == ROTATE) get_turning_theta(current->we, current->weTranslated);
+	else transform_WE(current->we, current->weTranslated);
 
 	// Shift nsTranslated with room switch vector and last kalman
 	current->nsTranslated->v[0] += room_switch->v[0] + last->kalmanFiltered->v[0];
