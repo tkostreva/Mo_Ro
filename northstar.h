@@ -8,7 +8,7 @@
 #include "matvec.h"
 
 #define NS_SCALING_FACTOR	90000.0
-#define NS_TICKS_PER_CM		45.0
+#define NS_TICKS_PER_CM		55.0
 
 typedef struct _ns_stance_ {
 	int x;
