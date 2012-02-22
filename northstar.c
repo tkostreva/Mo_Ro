@@ -24,9 +24,10 @@ void get_ns(ns_stance *s, robot_if_t *ri ) {
 	s->room = ri_getRoomID(ri);	
 }
 
+float rot_theta;
 // Setup the transformation matrices with values stored in NS stance s
 void setup_NS_transforms(ns_stance *s) {
-	float rot_theta = theta_cor[(s->room - 2)];  // rotation theta is defined by theta correctection matrix, values defined during calibration
+	rot_theta = theta_cor[(s->room - 2)];  // rotation theta is defined by theta correctection matrix, values defined during calibration
 	
 	// free pointers in case previously declared
 	free(ns_shift_vector);
@@ -40,6 +41,8 @@ void setup_NS_transforms(ns_stance *s) {
 	
 	//diagnostic
 	//print_ns(s);
+	
+	
 	
 	// initialize shift vector
 	ns_shift_vector->v[0] = (-1.0)*((float)s->x);
@@ -84,13 +87,30 @@ void setup_NS_transforms(ns_stance *s) {
 void transform_NS(ns_stance *s, vector *ns){
 	vector working_vector; 
 	vector working_vector_2;
-		
+	float newX, newY, newT;
 	//initialize current ns_vector
 	ns->v[0] = (s->x);
 	ns->v[1] = (s->y);
 	ns->v[2] = (s->theta);
 	//PrintVector(ns);//diagnostic
 	
+	
+	//non- matrix transforms:
+	//rotate:
+	newX = s->v[0]*cos(rot_theta) − s->v[1]*sin(rot_theta);
+	newY = s->v[1]*cos(rot_theta) + s->v[0]*sin(rot_theta);
+	//shift:
+	newX += ns_shift_vector[0];
+	newY += ns_shift_vector[1];
+	newT += ns_shift_vector[2];
+	//scale:
+	newX *= (1/52);
+	newY *= (1/52);
+	//move:
+	ns->v[0]=newX;
+	ns->v[1]=newY;
+	ns->v[2]=newT;
+	/*
 	//shift
 	AddVectors(ns, ns_shift_vector, &working_vector);
 	//diagnostic
@@ -118,7 +138,8 @@ void transform_NS(ns_stance *s, vector *ns){
 	MultMatVec(scale_matrix, &working_vector_2, ns);
 	//diagnostic
 	//printf("Scaling Result = ");
-	//PrintVector(ns);	
+	//PrintVector(ns);
+	*/
 }
 
 // Print out a northstar stance structure
