@@ -83,7 +83,7 @@ void setup_NS_transforms(ns_stance *s) {
 void transform_NS(ns_stance *s, vector *ns){
 	vector working_vector; 
 	vector working_vector_2;
-	float newX, newY, newT;
+	//float newX, newY, newT;
 	
 	//initialize current ns_vector
 	ns->v[0] = (s->x);
