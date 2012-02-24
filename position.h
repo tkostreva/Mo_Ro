@@ -1,5 +1,8 @@
-/*	
- *	Where am I according to tracked coordinates?
+/*
+ * Filename: position.h
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause
+ * Date: 02-24-2012
+ * Purpose:	
  *	Utilizes position data from the north-star and wheel encoders to give you an idea of the robot’s position.
  * 	Performs neccessary filtering using filter.h
  */
@@ -32,29 +35,31 @@ typedef struct _robot_stance_ {
 	vector *kalmanFiltered; // Kalman Filtered Data
 } robot_stance;
 
-//int check_rotation(int rot);
 
-void update_theta(char *s);
-
+// create robot stances
 robot_stance *create_stance();
 
+// obtain kalman filtered data
 void get_kalman_filter_data(vector *kf_data);
 
-float turn_to();
-
+//use this to report ACTUAL difference between last theta and current theta
 float delta_theta(float current_theta, float previous_theta);
 
-void init_pos(robot_if_t *ri);		//sets up initial coordinates
+//sets up initial coordinates
+void init_pos(robot_if_t *ri);		
 
 /* Get Position of bot, stored in vector loc, feed kalman filter expected velocities, reports a room change */
 int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t);
 
+// Function for gathering Northstar data and returning it in vector u 
 int NS_theta_cal(robot_if_t *ri, vector *u);
 
+// Deep copy of robot stance object
 void copy_stance(robot_stance *original, robot_stance *copy);
 
 void print_stance_csv();
 
-void exit_pos();			//clean up memory
+//clean up memory
+void exit_pos();			
 
 #endif
