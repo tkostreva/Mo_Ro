@@ -8,15 +8,15 @@
 //the functions and structures defined herein are designed to work on 3x3 matrices and vectors. 
 typedef struct vector 
 {
-    float v[3];
+    float v[3];//holds data for vector
 } vector;
 
 typedef struct matrix
 {
-    float v[3][3];
+    float v[3][3];//holds data for matrix
 } matrix;
 
-void AddVectors(vector* pA, vector* pB, vector* pResult);//add 2 vectors
+void AddVectors(vector* pA, vector* pB, vector* pResult);//add two vectors
 void DotVectors(vector* a, vector* b, vector* result);//find the dot product of 2 vectors and store scalar to result->v[0]
 void CrossVectors ( vector* a, vector* b, vector* result);//find the cross product of 2 vectors
 void MultMatVec ( matrix* m, vector *v, vector* result);//multiply a matrix by a vector
