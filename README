@@ -37,7 +37,7 @@ PID_Control.h		Spencer
 filter.c		Tim
 filter.h		Tim
 matvec.c		Spencer - check
-matvec.h		Spencer
+matvec.h		Spencer - check
 northstar.c		Jun
 northstar.h		Jun
 position.c		Jun
