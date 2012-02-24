@@ -28,3 +28,21 @@ $git pull origin master
 // then update the REMOTE repository with your code
 
 $ git push origin master
+
+
+COMMENT THIS CODE (see theta_cal or filter if you want to keep headers consistent )
+
+PID_Control.c		Spencer
+PID_Control.h		Spencer
+filter.c		Tim
+filter.h		Tim
+matvec.c		Spencer
+matvec.h		Spencer
+northstar.c		Jun
+northstar.h		Jun
+position.c		Jun
+position.h		Jun
+robot_assign1.c		Spencer
+theta_cal.c		Tim
+wheel_encoder.c		Jun
+wheel_encoder.h		Jun
