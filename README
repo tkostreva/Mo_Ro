@@ -32,7 +32,7 @@ $ git push origin master
 
 COMMENT THIS CODE (see theta_cal or filter if you want to keep headers consistent )
 
-PID_Control.c		Spencer
+PID_Control.c		Spencer - check
 PID_Control.h		Spencer
 filter.c		Tim
 filter.h		Tim
