@@ -26,7 +26,7 @@
 /* GLOBALS */
 PID 	*fwdPID,
 	*rotPID;
-
+//discrete mappings for PID controllers:
 float rot_speed[] = {  // Rotation Speeds in [rad/s]
 	3.0,
 	3.0,
@@ -54,7 +54,7 @@ float fwd_speed[] = {  // Forward speeds in [cm/s]
 };
 
 /* FUNCTIONS */
-int fwdSpeedScaling(float PIDout) {
+int fwdSpeedScaling(float PIDout) {//applies mapping for forward pid controller
 	int 	temp,
 		speed;
 	
@@ -69,10 +69,10 @@ int fwdSpeedScaling(float PIDout) {
 	
 	if(PIDout < 0) speed *= -1;
 	
-	return speed;
+	return speed;//speed as rovio understands it
 }
 
-int rotSpeedScaling(float PIDout) {
+int rotSpeedScaling(float PIDout) {//apply mapping to rotational speed
 	float 	temp;
 	int	speed;
 	
@@ -89,17 +89,17 @@ int rotSpeedScaling(float PIDout) {
 	else if (temp >= 2.0 && temp < 3.0) speed = 7;
 	else if (temp < 2.0) speed = 7;
 	
-	if(PIDout < 0) speed *= -1;
+	if(PIDout < 0) speed *= -1;//used to get absolute value
 	
-	return speed;
+	return speed;speed as rovio understands it
 }
 
-float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){
+float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){//finds the pythagorean/ euclidian distance between 2 points
 	float	diff1,
 		diff2;
 	diff1 = end_x - start_x;
 	diff2 = end_y - start_y;
- 	return sqrt( diff1 * diff1 + diff2 * diff2 );
+ 	return sqrt( diff1 * diff1 + diff2 * diff2 );//pythagorean theorum
 }
 
 /* find slope of line to be traveled in our coordinate system */
@@ -132,7 +132,7 @@ float get_theta_to_target(float start_x, float start_y, float end_x, float end_y
  	return theta_to_target;
 }
 
-void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
+void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){//rotational course correction
 	float	output,
 		rot_amount,
 		sf;		/* scaling factor for windup */
@@ -187,7 +187,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	free(expected_vel);
 }
 
-void go_to_position(robot_if_t *ri, float end_x, float end_y){
+void go_to_position(robot_if_t *ri, float end_x, float end_y){//sends a robot to coords x, y
  	float	setpoint,
 		x_i,
 		y_i,
@@ -235,7 +235,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
 		setpoint = current_distance + distance_to_target;
-		
+		//uses invisible "lanes" to decide when theta needs to be corrected. 
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
 		
@@ -274,14 +274,14 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			expected_vel->v[1] = fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
 		}
 		else {
-			bot_speed *= -1;
+			bot_speed *= -1;//if speed is reverse, reverse robot
 			ri_move(ri, RI_MOVE_BACKWARD, bot_speed);
 			expected_vel->v[0] = -1.0 * fwd_speed[bot_speed - 1] * cos(current_location->v[2]);
 			expected_vel->v[1] = -1.0 * fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
 		}
 		
-		expected_vel->v[0] *= sf;
-		expected_vel->v[1] *= sf;
+		expected_vel->v[0] *= sf;//x portion of expected vel * = scaling factor
+		expected_vel->v[1] *= sf;//y             ||
 		
 		/* incriment scaling factor for expected velocites during wind up */
 		if (sf < 1.0) sf += 0.1;
@@ -351,6 +351,7 @@ int main(int argv, char **argc) {
 		//ri_move(&ri, RI_HEAD_DOWN , 1);
 	}
 	
+	//free dynamocally alloced vars. 
 	free(fwdPID);
 	free(rotPID);
 	
