@@ -87,7 +87,8 @@ void setup_NS_transforms(ns_stance *s) {
 void transform_NS(ns_stance *s, vector *ns){
 	vector working_vector; 
 	vector working_vector_2;
-	float newX, newY, newT;
+	/*float newX, newY, newT;
+	
 	//initialize current ns_vector
 	ns->v[0] = (s->x);
 	ns->v[1] = (s->y);
@@ -110,7 +111,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	ns->v[0]=newX;
 	ns->v[1]=newY;
 	ns->v[2]=newT;
-	/*
+	*/
 	//shift
 	AddVectors(ns, ns_shift_vector, &working_vector);
 	//diagnostic
@@ -139,7 +140,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	//diagnostic
 	//printf("Scaling Result = ");
 	//PrintVector(ns);
-	*/
+	
 }
 
 // Print out a northstar stance structure

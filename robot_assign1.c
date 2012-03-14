@@ -7,10 +7,11 @@
 #include "PID_Control.h"
 
 /* DEFINES */
-#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
-#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
+//#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
+//#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-//#define NUMBER_OF_WAYPOINTS 1
+#define WAYPOINT_COORDS {{0.0, 100.0}}
+#define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 1.0
 #define F_Ki 0.1
@@ -154,11 +155,12 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		output = Compute(rotPID, current_location->v[2], target_theta);
 		printf("Rotate PID Output = %f\n", output);
 		
-		// correlate output to an angular velocity this is a crappy substitute
+		// correlate output to an angular velocity
 		ang_vel = rotSpeedScaling(output);
 		 
 		if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
+			
 			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = rot_speed[ang_vel - 1];
@@ -166,6 +168,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
+			
 			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1];

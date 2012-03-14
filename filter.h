@@ -36,6 +36,7 @@ filter *fir_Filter_Create();
 /* Returns a filtered value from filter f, with input val, and filter type depth */
 float fir_Filter(filter *f, float val, int deep);
 
-/* Free memory from a instance of a filter struct
+/* Free memory from a instance of a filter struct */
 void free_filter(filter *f);
+
 #endif
