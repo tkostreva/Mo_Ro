@@ -38,5 +38,4 @@ float fir_Filter(filter *f, float val, int deep);
 
 /* Free memory from a instance of a filter struct */
 void free_filter(filter *f);
-
 #endif

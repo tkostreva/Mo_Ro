@@ -1,3 +1,12 @@
+/*
+ * Filename: northstar.h
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause
+ * Date: 02-24-2012
+ * Purpose:
+ * 	Various NorthStar operations will be performed in this file. 
+ * 	NorthStar transformation will be performed in this order: shift, rotate, and scale
+ */
+
 #ifndef _northstar_
 #define _northstar_
 
@@ -10,6 +19,8 @@
 #define NS_SCALING_FACTOR	90000.0
 #define NS_TICKS_PER_CM		55.0
 
+// ns_stance structure contains x and y coordinates of NorthStar. Also it consists
+// of theta, signal strength, and room ID
 typedef struct _ns_stance_ {
 	int x;
 	int y;
@@ -21,14 +32,16 @@ typedef struct _ns_stance_ {
 // Populate NorthStar Stance Object from sensor data
 void get_ns(ns_stance *s, robot_if_t *ri );
 
+// Setup the transformation matrices with values stored in NS stance s
 void setup_NS_transforms(ns_stance *s);
 
-void update_NS_transforms_after_room_change(ns_stance *before, ns_stance *after);
-
+// Perform northstar transformation 
 void transform_NS(ns_stance *s, vector *ns);
 
+// print out northstar data
 void print_ns(ns_stance *s);
 
+// export northstar data into a .csv file
 void print_ns_csv(ns_stance *s);
 
 void exit_ns();

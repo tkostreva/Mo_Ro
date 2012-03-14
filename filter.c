@@ -56,7 +56,7 @@ float fir_Filter(filter *f, float val, int depth) {
 	return sum;
 }
 
-/* Free memory from a instance of a filter struct
+// Free memory from a instance of a filter struct
 void free_filter(filter *f) {
     free(f);  
 }
