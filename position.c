@@ -1,8 +1,4 @@
 /*
- * Filename: position.c
- * Authors: Tim Kostreva, Junchao Hua, Spencer Krause
- * Date: 02-24-2012
- * Purpose:
  * 	Abstract all wheel encoder and northstar transforms into position.c so that 
  * 	robot_assign1 really only has to deal with our translated position.....
  * 	so the main program only knows how far it's gone in x and y in centimeters and theta in degrees?
@@ -25,11 +21,12 @@
  * f[6]  NorthStar Raw Signal Filter
  */
 
-// GLOBALS TO POSITION.C
+/* GLOBALS TO POSITION.C */
 filter *f[NUM_FILTERS];
 robot_stance *initial, *current, *previous, *last;
 vector *room_switch;
 kalmanFilter *kfilter;
+//int kalman_count = 0;
 
 // Update the robot's sensor information 
 void update_sensor_data( robot_if_t *ri ) {
@@ -42,13 +39,12 @@ void update_sensor_data( robot_if_t *ri ) {
         }
 }
 
-// flush all data from a FIR Filter
 void filter_flush(robot_if_t *ri) {
 	int i;
 	
 	for(i = 0; i < DEEP_TAPS - 1; i++) {
-		fir_Filter(f[0], (float)ri_getX(ri), DEEP_FILTER);
-		fir_Filter(f[1], (float)ri_getY(ri), DEEP_FILTER);
+		fir_Filter(f[0], (float)ri_getX(ri), SHALLOW_FILTER);
+		fir_Filter(f[1], (float)ri_getY(ri), SHALLOW_FILTER);
 		fir_Filter(f[2], ri_getTheta(ri), SHALLOW_FILTER);
 		fir_Filter(f[3], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_LEFT ), SHALLOW_FILTER);
 		fir_Filter(f[4], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_RIGHT ), SHALLOW_FILTER);
@@ -59,10 +55,9 @@ void filter_flush(robot_if_t *ri) {
 	}
 }
 
-// obtain filtered northstar and WE values from the FIR Filter
 void get_filtered(robot_stance *s, robot_if_t *ri){
-	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
-	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
+	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, SHALLOW_FILTER);
+	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, SHALLOW_FILTER);
 	s->ns_f->theta		= s->ns->theta; //(fir_Filter(f[2], s->ns->theta, SHALLOW_FILTER) + s->ns->theta) / 2.0;
 	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
 	s->ns_f->room		= s->ns->room;
@@ -124,10 +119,11 @@ void get_kalman_filter_data(vector *kf_data){
 	//printf("Kalmann filtered result = %f\t%f\t%f\n", track[0],track[1],track[2]);	
 }
 
-// Initialize Northstar and WE operations
 void init_pos(robot_if_t *ri){
 	int i;
+	//float vel[3] = { 350.0/54.0, 0, 0 };
 	float vel[3] = {35, 0, 0 };
+	//float vel[3] = {0, 0, 10 };
 	float pos[3] = {0, 0, 0};
 	int deltaT = 1;
 	
@@ -157,6 +153,8 @@ void init_pos(robot_if_t *ri){
 	setup_NS_transforms(initial->ns_f);
 	setup_WE_transforms(initial->weTranslated);
 	
+	//printf("Initial Kalman Theta = %f \n", initial->kalmanFiltered->v[2]);
+	
 	// Copy Initial into current and previous to initialize them
 	copy_stance(initial, current);
 	copy_stance(initial, previous);
@@ -167,6 +165,7 @@ void init_pos(robot_if_t *ri){
 	
 	// allocate memory for kalmanfilter
 	kfilter = (kalmanFilter *) calloc(1, sizeof(kalmanFilter));
+	//track = (float *) malloc(9*sizeof(float));
 	initKalmanFilter(kfilter, pos, vel, deltaT);	
 }
 
@@ -186,13 +185,12 @@ void update_pos(robot_if_t *ri){
 	setup_NS_transforms(current->ns_f);
 	setup_WE_transforms(current->kalmanFiltered);
 	
-	// reset room switch if it was used
+	/* reset room switch if it was used */
 	room_switch->v[0] = 0.0;
 	room_switch->v[1] = 0.0;
 	room_switch->v[2] = 0.0;
 }
 
-// perform this function whenever there is a room change
 void room_change(robot_if_t *ri){
 	// flush fliters for new room
 	filter_flush(ri);
@@ -212,7 +210,6 @@ void room_change(robot_if_t *ri){
 	room_switch->v[2] = previous->nsTranslated->v[2];
 }
 
-// Obtain current WE and Northstar positions
 int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	static int lastmove;
 	float d_theta;
@@ -247,6 +244,7 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	current->ns_f->theta = d_theta + previous->ns_f->theta;
 	
 	// Transforms occur here
+	print_ns(current->ns_f);
 	transform_NS(current->ns_f, current->nsTranslated);
 	if(m_t == ROTATE) get_turning_theta(current->we, current->weTranslated);
 	else transform_WE(current->we, current->weTranslated);
@@ -289,7 +287,7 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	return room_changed;
 }
 
-// Function for gathering Northstar data and returning it in vector u 
+/* Function for gathering Northstar data and returning it in vector u */
 int NS_theta_cal(robot_if_t *ri, vector *u){
 	update_sensor_data(ri);
 	get_stance(current, ri);
@@ -333,7 +331,6 @@ void copy_stance(robot_stance *original, robot_stance *copy){
 	copy->kalmanFiltered->v[2] = original->kalmanFiltered->v[2];
 }
 
-//output all WE and northstar data in .csv format
 void print_stance_csv(){
 	static char init = 0;
 	

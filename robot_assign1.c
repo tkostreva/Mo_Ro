@@ -21,13 +21,13 @@
 #define R_Ki 0.5
 #define R_Kd 0.20
 
-#define LANE_LIMIT 20.0
+#define LANE_LIMIT 25.0
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
 
 /* GLOBALS */
 PID 	*fwdPID,
 	*rotPID;
-//discrete mappings for PID controllers:
+
 float rot_speed[] = {  // Rotation Speeds in [rad/s]
 	3.0,
 	3.0,
@@ -55,7 +55,7 @@ float fwd_speed[] = {  // Forward speeds in [cm/s]
 };
 
 /* FUNCTIONS */
-int fwdSpeedScaling(float PIDout) {//applies mapping for forward pid controller
+int fwdSpeedScaling(float PIDout) {
 	int 	temp,
 		speed;
 	
@@ -70,10 +70,10 @@ int fwdSpeedScaling(float PIDout) {//applies mapping for forward pid controller
 	
 	if(PIDout < 0) speed *= -1;
 	
-	return speed;//speed as rovio understands it
+	return speed;
 }
 
-int rotSpeedScaling(float PIDout) {//apply mapping to rotational speed
+int rotSpeedScaling(float PIDout) {
 	float 	temp;
 	int	speed;
 	
@@ -90,17 +90,17 @@ int rotSpeedScaling(float PIDout) {//apply mapping to rotational speed
 	else if (temp >= 2.0 && temp < 3.0) speed = 7;
 	else if (temp < 2.0) speed = 7;
 	
-	if(PIDout < 0) speed *= -1;//used to get absolute value
+	if(PIDout < 0) speed *= -1;
 	
 	return speed;
 }
 
-float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){//finds the pythagorean/ euclidian distance between 2 points
+float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){
 	float	diff1,
 		diff2;
 	diff1 = end_x - start_x;
 	diff2 = end_y - start_y;
- 	return sqrt( diff1 * diff1 + diff2 * diff2 );//pythagorean theorum
+ 	return sqrt( diff1 * diff1 + diff2 * diff2 );
 }
 
 /* find slope of line to be traveled in our coordinate system */
@@ -120,10 +120,10 @@ float get_theta_to_target(float start_x, float start_y, float end_x, float end_y
  	float theta_to_target = atan( (end_y - start_y) / (end_x-start_x) );
 	if( end_x < start_x ){//its gonna be outside of the range of arctan//this heuristic isnt perfect--> consider negative motion
    		if( end_y  > start_y){
-			printf("theta > 90 case1 -> left  ");
+			printf("theta > 90 case1 -> left  \n\n");
      			theta_to_target = M_PI + theta_to_target; //turn left
 		}else if(start_y>end_y){
-    			printf("theta > 90 case2 -> right ");
+    			printf("theta > 90 case2 -> right \n\n");
 			theta_to_target = M_PI - theta_to_target;//turn right
 		}else//it needs to make a 180
      			theta_to_target = M_PI;//180 degrees
@@ -133,7 +133,7 @@ float get_theta_to_target(float start_x, float start_y, float end_x, float end_y
  	return theta_to_target;
 }
 
-void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){//rotational course correction
+void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
 	float	output,
 		rot_amount,
 		sf;		/* scaling factor for windup */
@@ -148,8 +148,6 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	sf = 0.1;
 	
 	do {
-		rot_amount = fabs(target_theta - current_location->v[2]);
-		
 		printf("\n *********************  ROT PID ENABLED  ********************\n\n");
 		printf("Curr Theta = %f\tTarget Theta = %f\n", current_location->v[2], target_theta);
 		output = Compute(rotPID, current_location->v[2], target_theta);
@@ -160,6 +158,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		 
 		if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
+			
 			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = rot_speed[ang_vel - 1];
@@ -167,6 +166,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
+			
 			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1];
@@ -182,13 +182,15 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		 
 		get_Position(ri, current_location, expected_vel, ROTATE);
 		
-		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
+		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);
+		
+		rot_amount = fabs(target_theta - current_location->v[2]);
 	} while (rot_amount > 0.25);  // found the granularity of turning is roughly 0.45 radians per turn (single plug...  speed = 6
 	
 	free(expected_vel);
 }
 
-void go_to_position(robot_if_t *ri, float end_x, float end_y){//sends a robot to coords x, y
+void go_to_position(robot_if_t *ri, float end_x, float end_y){
  	float	setpoint,
 		x_i,
 		y_i,
@@ -236,7 +238,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){//sends a robot to
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
 		setpoint = current_distance + distance_to_target;
-		//uses invisible "lanes" to decide when theta needs to be corrected. 
+		
 		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
 		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
 		
@@ -275,14 +277,14 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){//sends a robot to
 			expected_vel->v[1] = fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
 		}
 		else {
-			bot_speed *= -1;//if speed is reverse, reverse robot
+			bot_speed *= -1;
 			ri_move(ri, RI_MOVE_BACKWARD, bot_speed);
 			expected_vel->v[0] = -1.0 * fwd_speed[bot_speed - 1] * cos(current_location->v[2]);
 			expected_vel->v[1] = -1.0 * fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
 		}
 		
-		expected_vel->v[0] *= sf;//x portion of expected vel * = scaling factor
-		expected_vel->v[1] *= sf;//y             ||
+		expected_vel->v[0] *= sf;
+		expected_vel->v[1] *= sf;
 		
 		/* incriment scaling factor for expected velocites during wind up */
 		if (sf < 1.0) sf += 0.1;
@@ -294,7 +296,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){//sends a robot to
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
 		
 		
- 	} while((fabs(distance_to_target) > tolerance) && (!ri_IR_Detected(ri)));
+ 	} while((fabs(distance_to_target) > tolerance) ); // && (!ri_IR_Detected(ri)));
 
  	//point robot to end theta using PID //code me
  	free(current_location);
@@ -343,16 +345,17 @@ int main(int argv, char **argc) {
 		target_x = waypoints[index][0];
 		target_y = waypoints[index][1];
 		go_to_position(&ri, target_x, target_y);
+		/*
 		if(!ri_IR_Detected(&ri)) {
 			printf("I found an obstacle!  Stopping!\n\n");
 			exit(-10);
 		}
+		*/
 		printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
 		//ri_move(&ri, RI_HEAD_MIDDLE , 1);
 		//ri_move(&ri, RI_HEAD_DOWN , 1);
 	}
 	
-	//free dynamocally alloced vars. 
 	free(fwdPID);
 	free(rotPID);
 	

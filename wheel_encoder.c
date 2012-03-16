@@ -163,9 +163,10 @@ void get_turning_theta(we_stance *s, vector *ws) {
 		avg_theta;
 	
 	// theta a wheel travels through is the distance traveled along outside diameter [in cm] / radius in cm
-	l_theta = (float)s->left_tot / WE_TICKS_PER_CM / 13.5;
-	r_theta = (float)s->right_tot / WE_TICKS_PER_CM / 13.5;
-	b_theta = (float)s->back_tot / WE_TICKS_PER_CM / 15.0;
+	// Original Measurements:  Front wheels radius 13.5  Rear Wheel 15.0
+	l_theta = ( (float)s->left_tot / WE_TICKS_PER_CM ) / 10.5;
+	r_theta = ( (float)s->right_tot / WE_TICKS_PER_CM ) / 10.5;
+	b_theta = ( (float)s->back_tot / WE_TICKS_PER_CM ) / 11.0;
 	
 	// for right rotation, left WE increases, right WE decreases, back WE increases;  opposite for left rotation
 	// following formula properly sums thetas */

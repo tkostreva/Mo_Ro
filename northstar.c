@@ -1,10 +1,5 @@
 /*
- * Filename: northstar.c
- * Authors: Tim Kostreva, Junchao Hua, Spencer Krause
- * Date: 02-24-2012
- * Purpose:
- * 	Various NorthStar operations will be performed in this file. 
- * 	NorthStar transformation will be performed in this order: shift, rotate, and scale
+ * 	Now only reports raw NorthStar Data....  filtering will be done in position.c
  */
 
 #include "northstar.h"
@@ -30,11 +25,9 @@ void get_ns(ns_stance *s, robot_if_t *ri ) {
 }
 
 float rot_theta;
-
 // Setup the transformation matrices with values stored in NS stance s
 void setup_NS_transforms(ns_stance *s) {
-	// rotation theta is defined by theta correctection matrix, values defined during calibration
-	rot_theta = theta_cor[(s->room - 2)];  
+	rot_theta = theta_cor[(s->room - 2)];  // rotation theta is defined by theta correctection matrix, values defined during calibration
 	
 	// free pointers in case previously declared
 	free(ns_shift_vector);
@@ -46,10 +39,16 @@ void setup_NS_transforms(ns_stance *s) {
 	ns_rot_matrix = calloc(1, sizeof(matrix));
 	scale_matrix = calloc(1, sizeof(matrix));
 	
+	//diagnostic
+	//print_ns(s);	
+	
 	// initialize shift vector
 	ns_shift_vector->v[0] = (-1.0)*((float)s->x);
 	ns_shift_vector->v[1] = (-1.0)*((float)s->y);
 	ns_shift_vector->v[2] = (-1.0)*(s->theta);
+	//diagnostic
+	//printf("Shift Vector is ");
+	//PrintVector(ns_shift_vector);
 	
 	//initialize ns_rot_matrix
 	ns_rot_matrix->v[0][0] = cos(rot_theta);
@@ -63,6 +62,9 @@ void setup_NS_transforms(ns_stance *s) {
 	ns_rot_matrix->v[2][0] = 0.0;
 	ns_rot_matrix->v[2][1] = 0.0;
 	ns_rot_matrix->v[2][2] = 1.0;
+	
+	//printf("Rotation Matrix = \n");
+	//PrintMatrix( ns_rot_matrix );
 	
 	//initialize scale_matrix
 	scale_matrix->v[0][0] = 1.0/NS_TICKS_PER_CM;
@@ -83,31 +85,13 @@ void setup_NS_transforms(ns_stance *s) {
 void transform_NS(ns_stance *s, vector *ns){
 	vector working_vector; 
 	vector working_vector_2;
-	/*float newX, newY, newT;
-	
+		
 	//initialize current ns_vector
 	ns->v[0] = (s->x);
 	ns->v[1] = (s->y);
 	ns->v[2] = (s->theta);
 	//PrintVector(ns);//diagnostic
 	
-	
-	//non- matrix transforms:
-	//rotate:
-	newX = s->v[0]*cos(rot_theta) − s->v[1]*sin(rot_theta);
-	newY = s->v[1]*cos(rot_theta) + s->v[0]*sin(rot_theta);
-	//shift:
-	newX += ns_shift_vector[0];
-	newY += ns_shift_vector[1];
-	newT += ns_shift_vector[2];
-	//scale:
-	newX *= (1/52);
-	newY *= (1/52);
-	//move:
-	ns->v[0]=newX;
-	ns->v[1]=newY;
-	ns->v[2]=newT;
-	*/
 	//shift
 	AddVectors(ns, ns_shift_vector, &working_vector);
 	//diagnostic
@@ -122,6 +106,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	
 	//scale
 	// Update Scaling Matrix based on current signal strength [NOT WORKING RIGHT]
+
 	if(s->sig > 0) {  // currently always skips dynamic scaling
 		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
 		scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
@@ -134,8 +119,7 @@ void transform_NS(ns_stance *s, vector *ns){
 	MultMatVec(scale_matrix, &working_vector_2, ns);
 	//diagnostic
 	//printf("Scaling Result = ");
-	//PrintVector(ns);
-	
+	//PrintVector(ns);	
 }
 
 // Print out a northstar stance structure
@@ -149,7 +133,6 @@ void print_ns_csv(ns_stance *s){
 	printf("%d, %d, %f, %d, %d", s->x, s->y, s->theta, s->sig, s->room);
 }
 
-// free the pointers
 void exit_ns(){
 	free(ns_shift_vector);
 	free(ns_rot_matrix);
