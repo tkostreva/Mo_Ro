@@ -10,7 +10,7 @@
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{0.0, 100.0}}
+#define WAYPOINT_COORDS {{65.0, 0.0}}
 #define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 1.0

@@ -91,7 +91,8 @@ float get_we_Theta(we_stance *s) {
 	// get angle bot has changed by inv tan of d_we / DIST BETWEEN FRONT WHEELS [measured at 23.4 cm]
 	theta = atan( d_we / 23.4 );
   
-	return theta;
+	//return theta;
+	return 0.0;
 }
 
 // return a transformed WE vector for use in the Kalman filter 
@@ -178,7 +179,7 @@ void finish_turn(robot_if_t *ri, vector *v) {
 	we_rot_matrix->v[1][0] = sin(v->v[2]);
 	we_rot_matrix->v[1][1] = cos(v->v[2]);
 	
-	/* update shift vector with final value from turn
+	/* update shift vector with final value from turn */
 	we_shift_vector->v[0] = v->v[0];
 	we_shift_vector->v[1] = v->v[1];
 	we_shift_vector->v[2] = v->v[2];
