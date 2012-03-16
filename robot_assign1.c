@@ -80,15 +80,15 @@ int rotSpeedScaling(float PIDout) {
 	temp = fabs(PIDout);
 	
 	if (temp >= 10.0) speed = 5;
-	else if (temp >= 9.0 && temp < 10.0) speed = 5;
-	else if (temp >= 8.0 && temp < 9.0) speed = 5;
-	else if (temp >= 7.0 && temp < 8.0) speed = 5;
-	else if (temp >= 6.0 && temp < 7.0) speed = 5;
-	else if (temp >= 5.0 && temp < 6.0) speed = 6;
-	else if (temp >= 4.0 && temp < 5.0) speed = 7;
-	else if (temp >= 3.0 && temp < 4.0) speed = 7;
-	else if (temp >= 2.0 && temp < 3.0) speed = 7;
-	else if (temp < 2.0) speed = 7;
+	else if (temp >= 9.0 && temp < 10.0) speed = 6;
+	else if (temp >= 8.0 && temp < 9.0) speed = 6;
+	else if (temp >= 7.0 && temp < 8.0) speed = 6;
+	else if (temp >= 6.0 && temp < 7.0) speed = 7;
+	else if (temp >= 5.0 && temp < 6.0) speed = 7;
+	else if (temp >= 4.0 && temp < 5.0) speed = 8;
+	else if (temp >= 3.0 && temp < 4.0) speed = 8;
+	else if (temp >= 2.0 && temp < 3.0) speed = 9;
+	else if (temp < 2.0) speed = 10;
 	
 	if(PIDout < 0) speed *= -1;
 	
@@ -185,7 +185,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
 		rot_amount = fabs(target_theta - current_location->v[2]);
-	} while (rot_amount > 0.25);  // found the granularity of turning is roughly 0.45 radians per turn (single plug...  speed = 6
+	} while (rot_amount > 0.075);  // found the granularity of turning is roughly 0.45 radians per turn (single plug...  speed = 6
 	
 	free(expected_vel);
 }

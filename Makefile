@@ -38,7 +38,6 @@ rovioKalmanFilter.o: rovioKalmanFilter.c
 	gcc ${CFLAGS} -c rovioKalmanFilter.c
 
 clean:
-	rm -rf *.o
-	rm -rf *~
+	rm -rf *.o *~ *.orig
 	rm -rf robot
 	rm -rf cal

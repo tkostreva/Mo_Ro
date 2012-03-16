@@ -12,6 +12,7 @@
 #include "matvec.h"
 //rosie
 #define WE_TICKS_PER_CM		3.615
+#define ROTATION_SCALING	1.75
 
 // WE struct
 typedef struct _we_stance_ {

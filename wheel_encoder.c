@@ -94,28 +94,6 @@ float get_we_Theta(we_stance *s) {
 	return theta;
 }
 
-// set up a waypoint for wheel encoder at turn location 
-void prepare_to_turn(robot_if_t *ri, vector *v){
-	// store v as the shift vector
-	we_shift_vector->v[0] = v->v[0];
-	we_shift_vector->v[1] = v->v[1];
-	we_shift_vector->v[2] = v->v[2];
-	
-	// reset we totals 
-	ri_reset_state(ri);
-}
-
-// update the shift and rotation vectors for wheel encoders from waypoint
-void finish_turn(robot_if_t *ri, vector *v) {
-	we_rot_matrix->v[0][0] = cos(v->v[2]);
-	we_rot_matrix->v[0][1] = -1.0 * sin(v->v[2]);
-		
-	we_rot_matrix->v[1][0] = sin(v->v[2]);
-	we_rot_matrix->v[1][1] = cos(v->v[2]);
-	
-	ri_reset_state(ri);
-}
-
 // return a transformed WE vector for use in the Kalman filter 
 void transform_WE(we_stance *s, vector *ws){
 	float theta,
@@ -154,6 +132,17 @@ void transform_WE(we_stance *s, vector *ws){
 	we_shift_vector->v[2] = ws->v[2];	
 }
 
+// set up a waypoint for wheel encoder at turn location 
+void prepare_to_turn(robot_if_t *ri, vector *v){
+	// store v as the shift vector
+	we_shift_vector->v[0] = v->v[0];
+	we_shift_vector->v[1] = v->v[1];
+	we_shift_vector->v[2] = v->v[2];
+	
+	// reset we totals 
+	ri_reset_state(ri);
+}
+
 // Using totals from all three wheel encoders ONLY when we are ordering a "turn to" 
 // Left and right WE are 13.5 cm from center of rotation, back WE is 15 cm from center 
 void get_turning_theta(we_stance *s, vector *ws) {
@@ -164,13 +153,13 @@ void get_turning_theta(we_stance *s, vector *ws) {
 	
 	// theta a wheel travels through is the distance traveled along outside diameter [in cm] / radius in cm
 	// Original Measurements:  Front wheels radius 13.5  Rear Wheel 15.0
-	l_theta = ( (float)s->left_tot / WE_TICKS_PER_CM ) / 10.5;
-	r_theta = ( (float)s->right_tot / WE_TICKS_PER_CM ) / 10.5;
-	b_theta = ( (float)s->back_tot / WE_TICKS_PER_CM ) / 11.0;
+	l_theta = ( (float)s->left_tot / ROTATION_SCALING ) / 13.5;
+	r_theta = ( (float)s->right_tot / ROTATION_SCALING ) / 13.5;
+	b_theta = ( (float)s->back_tot / ROTATION_SCALING ) / 15.0;
 	
 	// for right rotation, left WE increases, right WE decreases, back WE increases;  opposite for left rotation
 	// following formula properly sums thetas */
-	avg_theta = (l_theta - r_theta + b_theta) / 3.0;
+	avg_theta = 0.3 * l_theta - 0.3 * r_theta + 0.4 * b_theta;
 	
 	// make avg_theta conform to our coordinate system
 	avg_theta *= -1.0;
@@ -179,6 +168,22 @@ void get_turning_theta(we_stance *s, vector *ws) {
 	ws->v[0] = we_shift_vector->v[0];
 	ws->v[1] = we_shift_vector->v[1];
 	ws->v[2] = we_shift_vector->v[2] + avg_theta;
+}
+
+// update the shift and rotation vectors for wheel encoders from waypoint
+void finish_turn(robot_if_t *ri, vector *v) {
+	we_rot_matrix->v[0][0] = cos(v->v[2]);
+	we_rot_matrix->v[0][1] = -1.0 * sin(v->v[2]);
+		
+	we_rot_matrix->v[1][0] = sin(v->v[2]);
+	we_rot_matrix->v[1][1] = cos(v->v[2]);
+	
+	/* update shift vector with final value from turn
+	we_shift_vector->v[0] = v->v[0];
+	we_shift_vector->v[1] = v->v[1];
+	we_shift_vector->v[2] = v->v[2];
+	
+	ri_reset_state(ri);
 }
 
 // print WE data

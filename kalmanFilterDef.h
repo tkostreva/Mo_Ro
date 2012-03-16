@@ -16,15 +16,15 @@
 // **** you are free to adjust these values as you like ***** 
 #define NORTHSTAR_UNCERTAINTY_X  .25 // this is the uncertainty of the northstar readings, we are providing
 #define NORTHSTAR_UNCERTAINTY_Y  .25 // you with the capability to independently set the x,y,and theta
-#define NORTHSTAR_UNCERTAINTY_TH .05
+#define NORTHSTAR_UNCERTAINTY_TH .10
 
 #define WHEELENC_UNCERTAINTY_X  .1 // this is the uncertainty of the wheel encoder readings, 
 #define WHEELENC_UNCERTAINTY_Y  .1 // 
-#define WHEELENC_UNCERTAINTY_TH .10
+#define WHEELENC_UNCERTAINTY_TH .30
 
 #define PROCESS_UNCERTAINTY_X  .10 // this is the uncertainty about whether the robot will obey the model
 #define PROCESS_UNCERTAINTY_Y  .15
-#define PROCESS_UNCERTAINTY_TH .10
+#define PROCESS_UNCERTAINTY_TH .15
 
 // the following structure defines the important matrices and constants that make up the filter
 typedef struct{
