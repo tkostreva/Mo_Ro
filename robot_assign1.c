@@ -7,11 +7,11 @@
 #include "PID_Control.h"
 
 /* DEFINES */
-//#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
-//#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
+#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
+#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{65.0, 0.0}}
-#define NUMBER_OF_WAYPOINTS 1
+//#define WAYPOINT_COORDS {{65.0, 0.0},{130.0, 0.0},{195.0, 0.0},{260.0, 0.0},{325.0, 0.0}}
+//#define NUMBER_OF_WAYPOINTS 5
 
 #define F_Kp 1.0
 #define F_Ki 0.1
@@ -21,7 +21,6 @@
 #define R_Ki 0.5
 #define R_Kd 0.20
 
-#define LANE_LIMIT 25.0
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
 
 /* GLOBALS */
@@ -196,11 +195,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		y_i,
 		current_distance,
 		output,
-		slope,
-		intercept,
 		sf,
-		upper_limit,
-		lower_limit,
 		theta_target,
 		distance_to_target,
 		tolerance;
@@ -225,12 +220,8 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	theta_target = get_theta_to_target(x_i, y_i, end_x, end_y);
 	
 	// point robot at destination using PID 
-	if( (theta_target - current_location->v[2]) > 0.1) rotate_to_theta(ri, theta_target, current_location);	
+	if( fabs(theta_target - current_location->v[2]) > 0.15) rotate_to_theta(ri, theta_target, current_location);	
 	  
-	// find slope and intercept of line to be traveled to define limits on path
-	slope = get_slope(current_location->v[0], current_location->v[1], end_x, end_y);
-	intercept = get_intercept(slope, end_x, end_y);
-	tolerance = 5.0;
 	sf = 0.1;
 	i = 0;
 	
@@ -239,13 +230,12 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
 		setpoint = current_distance + distance_to_target;
 		
-		upper_limit = slope * current_location->v[0] + intercept + LANE_LIMIT;
-		lower_limit = slope * current_location->v[0] + intercept - LANE_LIMIT;
-		
 		//printf("Upper Lim = %f\tLower Lim = %f\n", upper_limit, lower_limit);
 		
-		if(((current_location->v[1] >= upper_limit) || (current_location->v[1] <= lower_limit )) && i >=10) {
-			theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
+		theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
+		
+		if(fabs(theta_target - current_location->v[2]) > 0.25) {
+			
 			rotate_to_theta(ri, theta_target, current_location);
 			
 			/* reset PID control for rest of move */
@@ -296,7 +286,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
 		
 		
- 	} while((fabs(distance_to_target) > tolerance) ); // && (!ri_IR_Detected(ri)));
+ 	} while(distance_to_target > tolerance ); // && (!ri_IR_Detected(ri)));
 
  	//point robot to end theta using PID //code me
  	free(current_location);
