@@ -10,8 +10,8 @@
 #define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 #define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-//#define WAYPOINT_COORDS {{65.0, 0.0},{130.0, 0.0},{195.0, 0.0},{260.0, 0.0},{325.0, 0.0}}
-//#define NUMBER_OF_WAYPOINTS 5
+//#define WAYPOINT_COORDS {{65.0, 0.0},{130.0, 0.0}}
+//#define NUMBER_OF_WAYPOINTS 2
 
 #define F_Kp 1.0
 #define F_Ki 0.1
@@ -78,16 +78,16 @@ int rotSpeedScaling(float PIDout) {
 	
 	temp = fabs(PIDout);
 	
-	if (temp >= 10.0) speed = 5;
-	else if (temp >= 9.0 && temp < 10.0) speed = 6;
-	else if (temp >= 8.0 && temp < 9.0) speed = 6;
-	else if (temp >= 7.0 && temp < 8.0) speed = 6;
-	else if (temp >= 6.0 && temp < 7.0) speed = 7;
-	else if (temp >= 5.0 && temp < 6.0) speed = 7;
-	else if (temp >= 4.0 && temp < 5.0) speed = 8;
-	else if (temp >= 3.0 && temp < 4.0) speed = 8;
-	else if (temp >= 2.0 && temp < 3.0) speed = 9;
-	else if (temp < 2.0) speed = 10;
+	if (temp >= 10.0) speed = 3;
+	else if (temp >= 9.0 && temp < 10.0) speed = 3;
+	else if (temp >= 8.0 && temp < 9.0) speed = 3;
+	else if (temp >= 7.0 && temp < 8.0) speed = 3;
+	else if (temp >= 6.0 && temp < 7.0) speed = 3;
+	else if (temp >= 5.0 && temp < 6.0) speed = 3;
+	else if (temp >= 4.0 && temp < 5.0) speed = 3;
+	else if (temp >= 3.0 && temp < 4.0) speed = 3;
+	else if (temp >= 2.0 && temp < 3.0) speed = 3;
+	else if (temp < 2.0) speed = 3;
 	
 	if(PIDout < 0) speed *= -1;
 	
@@ -100,16 +100,6 @@ float get_euclidian_distance(float start_x, float start_y, float end_x, float en
 	diff1 = end_x - start_x;
 	diff2 = end_y - start_y;
  	return sqrt( diff1 * diff1 + diff2 * diff2 );
-}
-
-/* find slope of line to be traveled in our coordinate system */
-float get_slope(float start_x, float start_y, float end_x, float end_y){
-	return ( (end_y - start_y) / (end_x - start_x) );
-}
-
-/* find y intercept of line to be traved in our coordinate system */
-float get_intercept(float m, float end_x, float end_y){
-	return ( end_y - m * end_x );
 }
 
 /* current_theta-get_theta_to_target() = theta to correct */
@@ -157,6 +147,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		 
 		if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
+			ri_move(ri, RI_STOP, 1);
 			
 			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
@@ -165,6 +156,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
+			ri_move(ri, RI_STOP, 1);
 			
 			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
