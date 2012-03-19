@@ -75,7 +75,7 @@ float get_we_Y(we_stance *s) {
 	avg += (float)s->left_delta * cos(120.0 / 180.0 * M_PI);
 	avg /= 2.0;
 	
-	avg /= WE_TICKS_PER_CM;
+	avg /= WE_TICKS_PER_CM * 4.0;
 	
 	return avg;
 }

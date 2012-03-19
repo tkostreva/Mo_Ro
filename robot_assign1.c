@@ -7,11 +7,11 @@
 #include "PID_Control.h"
 
 /* DEFINES */
-#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
-#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
+//#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
+//#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-//#define WAYPOINT_COORDS {{65.0, 0.0},{130.0, 0.0}}
-//#define NUMBER_OF_WAYPOINTS 2
+#define WAYPOINT_COORDS {{65.0, 0.0},{65.0, 0.0}}
+#define NUMBER_OF_WAYPOINTS 2
 
 #define F_Kp 1.0
 #define F_Ki 0.1
@@ -226,7 +226,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
 		theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
 		
-		if(fabs(theta_target - current_location->v[2]) > 0.25) {
+		if(fabs(theta_target - current_location->v[2]) > 0.4) {
 			
 			rotate_to_theta(ri, theta_target, current_location);
 			
@@ -267,18 +267,19 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
 		expected_vel->v[0] *= sf;
 		expected_vel->v[1] *= sf;
+		expected_vel->v[2] = 0.0;
 		
 		/* incriment scaling factor for expected velocites during wind up */
-		if (sf < 1.0) sf += 0.1;
+		if (sf < 1.0) sf += 0.2;
 		i++;
 		
 		//refresh current position values and see if bot changed rooms.  If it does, reset scaling factor
    		if( get_Position(ri, current_location, expected_vel, FORWARD) ) sf = 0.1;
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
-		
-		
  	} while(distance_to_target > tolerance ); // && (!ri_IR_Detected(ri)));
+ 	
+ 	ri_move(ri, RI_STOP, 1);
 
  	//point robot to end theta using PID //code me
  	free(current_location);
@@ -336,6 +337,8 @@ int main(int argv, char **argc) {
 		printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
 		//ri_move(&ri, RI_HEAD_MIDDLE , 1);
 		//ri_move(&ri, RI_HEAD_DOWN , 1);
+		
+		getc(stdin);
 	}
 	
 	free(fwdPID);
