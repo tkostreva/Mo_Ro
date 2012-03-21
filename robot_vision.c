@@ -340,6 +340,20 @@ int center(robot_if_t *ri) {
 		else if(twoLargest) /* when pair not detected, second biggest square is smaller than the first biggest square */
 		{
 			cnt = 0;
+			//If largest is to the LEFT of the next largest, turn right
+			if (largest->center.x < next_largest->center.x){
+				printf("Both squares left of center line.  rotate right at speed = 6\n");
+				ri_move(ri, RI_TURN_RIGHT, 6);
+				ri_move(ri, RI_STOP, 1);
+				}
+			//If largest is to the RIGHT of the next largest, turn left
+			else if (largest->center.x > image->width/2 && next_largest->center.x > image->width/2){
+				printf("Both squares right of center line.  rotate left at speed = 6\n");
+				ri_move(ri, RI_TURN_LEFT, 6); 
+				ri_move(ri, RI_STOP, 1);
+			}
+			
+			/*
 			if ((largest->area - next_largest->area) > 500){
 				//if both squares are at the left side of the center line
 				if (largest->center.x < image->width/2 && next_largest->center.x < image->width/2){
@@ -366,6 +380,7 @@ int center(robot_if_t *ri) {
 				}
 				
 			}
+			*/
 		}
 		else if(onlyLargest) /* If we only find a single usable largest square */
 		{
