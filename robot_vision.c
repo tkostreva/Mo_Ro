@@ -333,6 +333,7 @@ int center(robot_if_t *ri) {
 				
 			}
 			else {
+				printf("Center found...  passing control back to main.\n");
 				flag = 1;
 				break;
 			}
