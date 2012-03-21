@@ -5,13 +5,14 @@
 #include <time.h>
 #include "position.h"
 #include "PID_Control.h"
+#include "robot_vision.h"
 
 /* DEFINES */
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{65.0, 0.0},{65.0, 0.0}}
-#define NUMBER_OF_WAYPOINTS 2
+#define WAYPOINT_COORDS {{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{0.0, 64.0},{0.0, 64.0},{0.0, 64.0}}
+#define NUMBER_OF_WAYPOINTS 8
 
 #define F_Kp 1.0
 #define F_Ki 0.1
@@ -188,18 +189,17 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		current_distance,
 		output,
 		sf,
-		theta_target,
-		distance_to_target,
 		tolerance;
 	int	i,
 		bot_speed;
-	tolerance = 20.0;//adjustable.  How close should I be to the waypoint before moving onto the next one?
 	vector 	*current_location,
 		*expected_vel;
-		
+	
 	current_location = (vector *)calloc(1, sizeof(vector));
 	expected_vel = (vector *)calloc(1, sizeof(vector));
  	
+	tolerance = 7.5;//adjustable.  How close should I be to the waypoint before moving onto the next one?
+	
 	/* reset PID control for this move */
 	reset_PID(fwdPID);
 		
@@ -208,50 +208,24 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	x_i = current_location->v[0];
 	y_i = current_location->v[1];
 	
-	// find initial theta to target in case we need to rotate immediately
-	theta_target = get_theta_to_target(x_i, y_i, end_x, end_y);
-	
-	// point robot at destination using PID 
-	if( fabs(theta_target - current_location->v[2]) > 0.15) rotate_to_theta(ri, theta_target, current_location);	
-	  
 	sf = 0.1;
 	i = 0;
 	
+	setpoint = get_euclidian_distance(current_location->v[0], current_location->v[1], 
+		current_location->v[0] + end_x, current_location->v[1] + end_y);
+	
 	do {
-		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
-		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
-		setpoint = current_distance + distance_to_target;
+		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);		
 		
-		//printf("Upper Lim = %f\tLower Lim = %f\n", upper_limit, lower_limit);
+		printf("\n *********************  FWD PID ENABLED  ********************\n\n");
+		printf("CurrDist = %f\tSetPoint = %f\n", current_distance, setpoint);
+		output = Compute(fwdPID, current_distance, setpoint );
+		printf("FWD PID Output = %f\n", output);
 		
-		theta_target = get_theta_to_target(current_location->v[0], current_location->v[1], end_x, end_y);
+		// correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
 		
-		if(fabs(theta_target - current_location->v[2]) > 0.4) {
-			
-			rotate_to_theta(ri, theta_target, current_location);
-			
-			/* reset PID control for rest of move */
-			reset_PID(fwdPID);
-			sf = 0.1;
-			i = 0;
-		}
-		
-		//move to reduce error at fill speed, then using PID in last 75 cm
-		if( distance_to_target <= 75 ) {
-			  printf("\n *********************  FWD PID ENABLED  ********************\n\n");
-			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
-			  output = Compute(fwdPID, current_distance, setpoint );
-			  printf("FWD PID Output = %f\n", output);
-			  
-			  // correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
-			  
-			  // shitty patch until we figure out correlation
-			  /*if(output < 0) bot_speed = -RI_SLOWEST;
-			  else bot_speed = RI_SLOWEST;*/
-			  bot_speed = fwdSpeedScaling(output);
-		}
-		else bot_speed = RI_FASTEST;
-		
+		bot_speed = fwdSpeedScaling(output);
+	
 		// move the bot based on bot_speed and define expected velocities for kalman filter
 		if(bot_speed > 0) {
 			ri_move(ri, RI_MOVE_FORWARD, bot_speed);
@@ -277,7 +251,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
    		if( get_Position(ri, current_location, expected_vel, FORWARD) ) sf = 0.1;
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
- 	} while(distance_to_target > tolerance ); // && (!ri_IR_Detected(ri)));
+ 	} while(current_distance <= (setpoint - tolerance) || current_distance >= (setpoint + tolerance) ); // && (!ri_IR_Detected(ri)));
  	
  	ri_move(ri, RI_STOP, 1);
 
@@ -299,10 +273,11 @@ void battery_check( robot_if_t *ri ) {
 
 int main(int argv, char **argc) {
 	robot_if_t ri;
-	//vector 	*location = (vector *)calloc(1, sizeof(vector));
+	vector 	*loc,
+		*vel;
 	float 	target_x,
 		target_y;
-	    
+	   
 	float waypoints[NUMBER_OF_WAYPOINTS][2] = WAYPOINT_COORDS;//WAYPOINT_COORDS;
 	int numWayPoints = NUMBER_OF_WAYPOINTS, index;
 	        
@@ -314,6 +289,9 @@ int main(int argv, char **argc) {
 	// Check condition of battery, exit if not enough charge
 	//battery_check(&ri);
 
+	loc = (vector *)calloc(1, sizeof(vector));
+	vel = (vector *)calloc(1, sizeof(vector));
+	
 	// Initialize PID controllers
 	fwdPID = calloc(1, sizeof(PID));
 	rotPID = calloc(1, sizeof(PID));
@@ -322,29 +300,36 @@ int main(int argv, char **argc) {
 	
 	// Retrieve initial position, initailize current and last
 	init_pos(&ri);
+	
+	//cvNamedWindow("Rovio Camera", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("Square Display", CV_WINDOW_AUTOSIZE);
+	cvNamedWindow("Thresholded", CV_WINDOW_AUTOSIZE);
 
 	//waypoint nav:
 	for(index = 0; index < numWayPoints; index++){
 		target_x = waypoints[index][0];
 		target_y = waypoints[index][1];
 		go_to_position(&ri, target_x, target_y);
-		/*
-		if(!ri_IR_Detected(&ri)) {
-			printf("I found an obstacle!  Stopping!\n\n");
-			exit(-10);
-		}
-		*/
-		printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
-		//ri_move(&ri, RI_HEAD_MIDDLE , 1);
-		//ri_move(&ri, RI_HEAD_DOWN , 1);
 		
-		getc(stdin);
+		printf("\n *********************  Waypoint %d Reached  ********************\n\n", (index+1));
+		
+		center(&ri);
+		
+		if(index == 4) {
+			get_Position(&ri, loc, vel, FORWARD);
+			rotate_to_theta(&ri, -M_PI/2.0, loc);
+		}
 	}
 	
 	free(fwdPID);
 	free(rotPID);
+	free(loc);
+	free(vel);
 	
 	exit_pos();
+	
+	cvDestroyWindow("Square Display");
+	cvDestroyWindow("Thresholded");
 	
 	return 0;
 }
