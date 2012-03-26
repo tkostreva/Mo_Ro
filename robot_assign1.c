@@ -20,8 +20,11 @@
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{0.0, 64.0},{0.0, 64.0},{0.0, 64.0}}
-#define NUMBER_OF_WAYPOINTS 8
+//#define WAYPOINT_COORDS {{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{64.0, 0.0},{0.0, 64.0},{0.0, 64.0},{0.0, 64.0}}
+//#define NUMBER_OF_WAYPOINTS 8
+#define WAYPOINT_COORDS {{0.0, 64.0}}
+#define NUMBER_OF_WAYPOINTS 1
+
 
 #define F_Kp 1.0
 #define F_Ki 0.1
@@ -29,7 +32,7 @@
 
 #define R_Kp 10.0/M_PI
 #define R_Ki 0.5
-#define R_Kd 0.20
+#define R_Kd 0.05
 
 #define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
 
@@ -89,16 +92,16 @@ int rotSpeedScaling(float PIDout) {
 	
 	temp = fabs(PIDout);
 	
-	if (temp >= 10.0) speed = 3;
-	else if (temp >= 9.0 && temp < 10.0) speed = 3;
-	else if (temp >= 8.0 && temp < 9.0) speed = 3;
-	else if (temp >= 7.0 && temp < 8.0) speed = 3;
-	else if (temp >= 6.0 && temp < 7.0) speed = 3;
-	else if (temp >= 5.0 && temp < 6.0) speed = 3;
-	else if (temp >= 4.0 && temp < 5.0) speed = 3;
-	else if (temp >= 3.0 && temp < 4.0) speed = 3;
-	else if (temp >= 2.0 && temp < 3.0) speed = 3;
-	else if (temp < 2.0) speed = 3;
+	if (temp >= 10.0) speed = 4;
+	else if (temp >= 9.0 && temp < 10.0) speed = 4;
+	else if (temp >= 8.0 && temp < 9.0) speed = 4;
+	else if (temp >= 7.0 && temp < 8.0) speed = 4;
+	else if (temp >= 6.0 && temp < 7.0) speed = 4;
+	else if (temp >= 5.0 && temp < 6.0) speed = 6;
+	else if (temp >= 4.0 && temp < 5.0) speed = 6;
+	else if (temp >= 3.0 && temp < 4.0) speed = 6;
+	else if (temp >= 2.0 && temp < 3.0) speed = 6;
+	else if (temp < 2.0) speed = 6;
 	
 	if(PIDout < 0) speed *= -1;
 	
@@ -117,21 +120,22 @@ float get_euclidian_distance(float start_x, float start_y, float end_x, float en
 float get_theta_to_target(float start_x, float start_y, float end_x, float end_y){
 	//this needs to be made more robust... what happens after it turns around?
   
- 	float theta_to_target = atan( (end_y - start_y) / (end_x-start_x) );
+	float theta_to_target = atan( (end_y - start_y) / (end_x-start_x) );
 	if( end_x < start_x ){//its gonna be outside of the range of arctan//this heuristic isnt perfect--> consider negative motion
-   		if( end_y  > start_y){
+		if( end_y  > start_y){
 			printf("theta > 90 case1 -> left  \n\n");
-     			theta_to_target = M_PI + theta_to_target; //turn left
+			theta_to_target = M_PI + theta_to_target; //turn left
 		}else if(start_y>end_y){
-    			printf("theta > 90 case2 -> right \n\n");
+			printf("theta > 90 case2 -> right \n\n");
 			theta_to_target = M_PI - theta_to_target;//turn right
 		}else//it needs to make a 180
-     			theta_to_target = M_PI;//180 degrees
- 	}
- 	printf("  get theta to target called: start x = %f,end x = %f, start x = %f,end x = %f, deduced theta = %f\n\n", start_x, end_x, start_y, end_y, theta_to_target);
- 	
- 	return theta_to_target;
+			theta_to_target = M_PI;//180 degrees
+	}
+	printf("  get theta to target called: start x = %f,end x = %f, start x = %f,end x = %f, deduced theta = %f\n\n", start_x, end_x, start_y, end_y, theta_to_target);
+	
+	return theta_to_target;
 }
+
 //rotate the robot to a particular theta value
 void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
 	float	output,
@@ -155,11 +159,10 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		
 		// correlate output to an angular velocity
 		ang_vel = rotSpeedScaling(output);
-		 
+				 
 		if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
-			ri_move(ri, RI_STOP, 1);
-			
+						
 			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = rot_speed[ang_vel - 1];
@@ -167,12 +170,14 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
-			ri_move(ri, RI_STOP, 1);
-			
+						
 			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1];
-		 }
+		}
+		
+		/* as bot gets closert to desired theta, make changes smaller */
+		if(abs(ang_vel)) > 5)  ri_move(ri, RI_STOP, ang_vel);
 		
 		/* factor in windup time with scaling factor */
 		expected_vel->v[0] *= sf;
