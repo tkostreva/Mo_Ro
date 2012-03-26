@@ -1,6 +1,9 @@
-/*
- * 	Now only reports raw NorthStar Data....  filtering will be done in position.c
- */
+/*  
+* Filename: northstar.c  
+* Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+* Date: 02-24-2012  
+* Purpose: Now only reports raw NorthStar Data....  filtering will be done in position.c
+*/
 
 #include "northstar.h"
 
