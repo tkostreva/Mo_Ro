@@ -1,11 +1,9 @@
-/*
- * Filename: northstar.h
- * Authors: Tim Kostreva, Junchao Hua, Spencer Krause
- * Date: 02-24-2012
- * Purpose:
- * 	Various NorthStar operations will be performed in this file. 
- * 	NorthStar transformation will be performed in this order: shift, rotate, and scale
- */
+/*  
+* Filename: northstar.c  
+* Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+* Date: 02-24-2012  
+* Purpose: Now only reports raw NorthStar Data....  filtering will be done in position.c
+*/
 
 #ifndef _northstar_
 #define _northstar_
