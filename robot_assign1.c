@@ -1,3 +1,12 @@
+/*  
+ * Filename: robot_assign2.c  
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+ * Date: 03-20-2012  
+ * Purpose: use both image processing and room waypoints to guide the robot through the corrider. Each waypoint
+ *          is 65cm apart.
+ */
+
+
 #include <robot_if.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -55,6 +64,7 @@ float fwd_speed[] = {  // Forward speeds in [cm/s]
 };
 
 /* FUNCTIONS */
+//foward speed scaling
 int fwdSpeedScaling(float PIDout) {
 	int 	temp,
 		speed;
@@ -72,7 +82,7 @@ int fwdSpeedScaling(float PIDout) {
 	
 	return speed;
 }
-
+//rotational speed scaling
 int rotSpeedScaling(float PIDout) {
 	float 	temp;
 	int	speed;
@@ -94,7 +104,7 @@ int rotSpeedScaling(float PIDout) {
 	
 	return speed;
 }
-
+//euclidian distance between two points
 float get_euclidian_distance(float start_x, float start_y, float end_x, float end_y){
 	float	diff1,
 		diff2;
@@ -122,7 +132,7 @@ float get_theta_to_target(float start_x, float start_y, float end_x, float end_y
  	
  	return theta_to_target;
 }
-
+//rotate the robot to a particular theta value
 void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
 	float	output,
 		rot_amount,
@@ -181,7 +191,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 	
 	free(expected_vel);
 }
-
+//use this to navigate the robot through the corrider
 void go_to_position(robot_if_t *ri, float end_x, float end_y){
  	float	setpoint,
 		x_i,
