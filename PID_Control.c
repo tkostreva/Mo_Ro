@@ -1,3 +1,12 @@
+/* 
+ * Filename: PID_Control.c 
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause 
+ * Date: 02-24-2012 
+ * Purpose: Use PID control to control the speed of robot's forward movement when the robot reaches it's assigned 
+ *         wavepoint. Also it is used to control the rotational speed.
+ * 
+ */
+
 #include "PID_Control.h"
 
 /* GLOBAL */
