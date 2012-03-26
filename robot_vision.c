@@ -1,29 +1,20 @@
-/* Filename:  robot_vision.c
- * Author:	Based on robot_camera_example.c from API
- * 
- * 05-16: I added the cvOr() function to compute the new threshold, it definitely has improved our thresholded image.
- * 	 But the thresholded image still needs some work. I tried various combinations of HSV values but it didn't help that much.
- * 	 Also, I added a function (get_square_diffence()) to calculate the difference in distance between the biggest two squares 
- * 	and the center vertical line. 
- * 
- * A side note: I found that the resolution/quality of the cameras varies with different robots. Please use "Optimus"
- * 
- * 05-17: I tried several different robots and found that Optimus had the best threshold image for the current HSV values.
- *	Also, I added a routine to move the robot through the maze.  It actually works pretty well 50% of the times, until 
- *      the end where the robot has to make a right turn.  Because I didn't implement anything to keep track the distance 
- *      the robot has gone, so it doesn't know when to make that 90 degrees right turn yet.  
- * 
- * (Lines 267- 305 are the movement stuff)
- * 
+/*  
+ * Filename: robot_vision.c  
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+ * Date: 03-20-2012  
+ * Purpose: robot_vision uses image processing to center the robot at its waypoints. As of right now, robot_vision
+ *          only detects pink squares
  */
+
 
 #include "robot_vision.h"
 
+// sort the thresholded squares by the area
 void sort_squares(squares_t *squares) {
 	squares_t *sq_idx, 
 	          *counter;
 	int temp;
-	
+	//no squares detected
 	if (squares == NULL) {
 		printf("List does not exist\n\n");
 		return;
@@ -100,7 +91,7 @@ int get_diff_in_y(squares_t *square1, squares_t *square2){
 	//printf("square_1 y = %d\t square_2 y = %d\tdifference in y = %d\n", y_1, y_2, diff);
 	return diff;
 }
-
+//get the area ratio of two squares
 float getRatio(int x, int y) {  // x>y
 	float r;
 	
@@ -111,7 +102,7 @@ float getRatio(int x, int y) {  // x>y
 	//printf("Area ratio = %f\n", r);
 	return r;
 }
-
+//check whether two squares are a pair
 int isPair(squares_t *square1, squares_t *square2, float area_ratio_threshold){//set thresh around .75
 	//compare areas
 	float ratio;
@@ -128,7 +119,7 @@ int isPair(squares_t *square1, squares_t *square2, float area_ratio_threshold){/
 	if( (ratio > area_ratio_threshold ) && ( diff < 25 ) && !same_square )	return 1;
 	else									return 0;
 }
-
+//draw a X symbol on the image
 void draw_X(squares_t *s, IplImage *img, int R, int G, int B) {
 	CvPoint pt1, pt2;
 	int sq_amt = (int) (sqrt(s->area) / 2);	
@@ -147,7 +138,7 @@ void draw_X(squares_t *s, IplImage *img, int R, int G, int B) {
 	pt2.y = s->center.y - sq_amt;
 	cvLine(img, pt1, pt2, CV_RGB(R, G, B), 3, CV_AA, 0);
 }
-
+//draw a central vertical line in the middle of the image
 void draw_vertical_line(IplImage *img){
 	CvPoint pt1, pt2;
 	pt1.x = img->width/2;
@@ -179,7 +170,7 @@ void freeSquares(squares_t *s) {
 		s = sq_idx;	
 	}
 }
-
+// center the pose of the robot at the waypoints
 int center(robot_if_t *ri) {
 	int 	x_dist_diff,
 		flag,
