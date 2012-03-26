@@ -1,7 +1,11 @@
-/*
- * 	Abstract all wheel encoder and northstar transforms into position.c so that 
- * 	robot_assign1 really only has to deal with our translated position.....
- * 	so the main program only knows how far it's gone in x and y in centimeters and theta in degrees?
+/*  
+ * Filename: position.c  
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+ * Date: 02-24-2012  
+ * Purpose: Use filtered data and PID control to navigate the robot to a goto position.
+ *        Abstract all wheel encoder and northstar transforms into position.c so that 
+ * 	 robot_assign1 really only has to deal with our translated position.....
+ * 	 so the main program only knows how far it's gone in x and y in centimeters and theta in degrees?
  *
  *	1/19/2012 
  * 	DO FILTERING AND TRANSFORMS HERE so we have access to the raw data as well as filtered data
@@ -38,7 +42,7 @@ void update_sensor_data( robot_if_t *ri ) {
 		}
         }
 }
-
+//flush the fir filter
 void filter_flush(robot_if_t *ri) {
 	int i;
 	
@@ -54,7 +58,7 @@ void filter_flush(robot_if_t *ri) {
 		update_sensor_data(ri);
 	}
 }
-
+//get fir filtered data
 void get_filtered(robot_stance *s, robot_if_t *ri){
 	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, SHALLOW_FILTER);
 	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, SHALLOW_FILTER);
@@ -190,7 +194,7 @@ void update_pos(robot_if_t *ri){
 	room_switch->v[1] = 0.0;
 	room_switch->v[2] = 0.0;
 }
-
+//when a room change occurs
 void room_change(robot_if_t *ri){
 	// flush fliters for new room
 	filter_flush(ri);
