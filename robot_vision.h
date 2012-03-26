@@ -1,5 +1,9 @@
-/* Filename:  robot_vision.h
- * Author:	Based on robot_camera_example.c from API
+/*  
+ * Filename: robot_vision.c  
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+ * Date: 03-20-2012  
+ * Purpose: robot_vision uses image processing to center the robot at its waypoints. As of right now, robot_vision
+ *          only detects pink squares
  */
 
 #ifndef __ROBOT_VISION_H__
