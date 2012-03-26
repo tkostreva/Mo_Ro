@@ -219,11 +219,26 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	static int lastmove;
 	float d_theta;
 	int room_changed = 0;
+	IplImage *image = NULL;
+	
+	image = cvCreateImage(cvSize(640, 480), IPL_DEPTH_8U, 3);
+	
 	// copy current stance into previous
 	copy_stance(current, previous);
 	
 	update_sensor_data(ri);
 	get_stance(current, ri);
+	
+	// Get the current camera image
+	if(ri_get_image(ri, image) != RI_RESP_SUCCESS) {
+		printf("Unable to capture an image!\n");		
+	}
+	
+	// Display the image with the drawing oon ito
+	cvShowImage("Square Display", image);
+		
+	// Update the UI (10ms wait)
+	cvWaitKey(10);
 	
 	// check for room change
 	if (current->ns->room != previous->ns->room) {
@@ -288,6 +303,8 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	loc->v[2] = current->kalmanFiltered->v[2];
 	
 	lastmove = m_t; // track last state of move type
+	
+	free(image);
 	
 	return room_changed;
 }
