@@ -1,3 +1,11 @@
+/*  
+* Filename: matvec.c  
+* Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+* Date: 02-24-2012  
+* Purpose: matvec.c performs various matrix operations such as: vector addition, vector dot product, vector cross product
+*          matrix multiplication, and matrix addition.
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
