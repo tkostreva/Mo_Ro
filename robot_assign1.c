@@ -1,3 +1,11 @@
+/*  
+ * Filename: robot_assign2.c  
+ * Authors: Tim Kostreva, Junchao Hua, Spencer Krause  
+ * Date: 03-20-2012  
+ * Purpose: use both image processing and room waypoints to guide the robot through the corrider
+ */
+
+
 #include <robot_if.h>
 #include <stdio.h>
 #include <stdlib.h>
