@@ -2,7 +2,8 @@
  *  Author:	Tim Kostreva based on FIR filter code at
  * 		http://kujo.cs.pitt.edu/cs1567/index.php/Fir_code
  *  Date:	1/20/12
- *  Purpose:	Function code for filter.h
+ *  Purpose:	A Fir_Filter is used to filter out the signal noises that are present in the room. The coefficients
+                  were calculated from Matlab.  
  */
 
 #include "filter.h"
