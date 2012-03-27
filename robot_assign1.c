@@ -18,8 +18,8 @@
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{65.0, 0.0},{65.0, 0.0}}
-#define NUMBER_OF_WAYPOINTS 2
+#define WAYPOINT_COORDS {{0.0, 100.0}}
+#define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 1.0
 #define F_Ki 0.1
@@ -86,16 +86,16 @@ int rotSpeedScaling(float PIDout) {
 	
 	temp = fabs(PIDout);
 	
-	if (temp >= 10.0) speed = 3;
-	else if (temp >= 9.0 && temp < 10.0) speed = 3;
-	else if (temp >= 8.0 && temp < 9.0) speed = 3;
-	else if (temp >= 7.0 && temp < 8.0) speed = 3;
-	else if (temp >= 6.0 && temp < 7.0) speed = 3;
-	else if (temp >= 5.0 && temp < 6.0) speed = 3;
-	else if (temp >= 4.0 && temp < 5.0) speed = 3;
-	else if (temp >= 3.0 && temp < 4.0) speed = 3;
-	else if (temp >= 2.0 && temp < 3.0) speed = 3;
-	else if (temp < 2.0) speed = 3;
+	if (temp >= 10.0) speed = 4;
+	else if (temp >= 9.0 && temp < 10.0) speed = 4;
+	else if (temp >= 8.0 && temp < 9.0) speed = 4;
+	else if (temp >= 7.0 && temp < 8.0) speed = 4;
+	else if (temp >= 6.0 && temp < 7.0) speed = 4;
+	else if (temp >= 5.0 && temp < 6.0) speed = 6;
+	else if (temp >= 4.0 && temp < 5.0) speed = 6;
+	else if (temp >= 3.0 && temp < 4.0) speed = 6;
+	else if (temp >= 2.0 && temp < 3.0) speed = 6;
+	else if (temp < 2.0) speed = 6;
 	
 	if(PIDout < 0) speed *= -1;
 	
@@ -152,11 +152,10 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		
 		// correlate output to an angular velocity
 		ang_vel = rotSpeedScaling(output);
-		 
+				 
 		if(ang_vel > 0) {
 			ri_move(ri, RI_TURN_LEFT, ang_vel);
-			ri_move(ri, RI_STOP, 1);
-			
+						
 			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = rot_speed[ang_vel - 1];
@@ -164,12 +163,14 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		else {
 			ang_vel *= -1;
 			ri_move(ri, RI_TURN_RIGHT, ang_vel);
-			ri_move(ri, RI_STOP, 1);
-			
+						
 			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
 			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1];
-		 }
+		}
+		
+		/* as bot gets closert to desired theta, make changes smaller */
+		if (rot_amount < 0.20)  ri_move(ri, RI_STOP, ang_vel);
 		
 		/* factor in windup time with scaling factor */
 		expected_vel->v[0] *= sf;
@@ -184,7 +185,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
 		rot_amount = fabs(target_theta - current_location->v[2]);
-	} while (rot_amount > 0.075);  // found the granularity of turning is roughly 0.45 radians per turn (single plug...  speed = 6
+	} while (rot_amount > 0.075);
 	
 	free(expected_vel);
 }
