@@ -177,7 +177,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		}
 		
 		/* as bot gets closert to desired theta, make changes smaller */
-		if(abs(ang_vel)) > 5)  ri_move(ri, RI_STOP, ang_vel);
+		if (rot_amount < 0.20)  ri_move(ri, RI_STOP, ang_vel);
 		
 		/* factor in windup time with scaling factor */
 		expected_vel->v[0] *= sf;
@@ -192,7 +192,7 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
 		rot_amount = fabs(target_theta - current_location->v[2]);
-	} while (rot_amount > 0.075);  // found the granularity of turning is roughly 0.45 radians per turn (single plug...  speed = 6
+	} while (rot_amount > 0.075);
 	
 	free(expected_vel);
 }
