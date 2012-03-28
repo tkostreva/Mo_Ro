@@ -48,8 +48,8 @@ void filter_flush(robot_if_t *ri) {
 	int i;
 	
 	for(i = 0; i < DEEP_TAPS - 1; i++) {
-		fir_Filter(f[0], (float)ri_getX(ri), SHALLOW_FILTER);
-		fir_Filter(f[1], (float)ri_getY(ri), SHALLOW_FILTER);
+		fir_Filter(f[0], (float)ri_getX(ri), DEEP_FILTER);
+		fir_Filter(f[1], (float)ri_getY(ri), DEEP_FILTER);
 		fir_Filter(f[2], ri_getTheta(ri), SHALLOW_FILTER);
 		fir_Filter(f[3], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_LEFT ), SHALLOW_FILTER);
 		fir_Filter(f[4], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_RIGHT ), SHALLOW_FILTER);
@@ -61,9 +61,9 @@ void filter_flush(robot_if_t *ri) {
 }
 //get fir filtered data 
 void get_filtered(robot_stance *s, robot_if_t *ri){
-	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, SHALLOW_FILTER);
-	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, SHALLOW_FILTER);
-	s->ns_f->theta		= s->ns->theta; //(fir_Filter(f[2], s->ns->theta, SHALLOW_FILTER) + s->ns->theta) / 2.0;
+	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
+	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
+	s->ns_f->theta		= fir_Filter(f[2], previous->ns_f->theta + delta_theta(current->ns->theta, previous->ns->theta), SHALLOW_FILTER);
 	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
 	s->ns_f->room		= s->ns->room;
 	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, SHALLOW_FILTER);
@@ -214,10 +214,10 @@ void room_change(robot_if_t *ri){
 	room_switch->v[1] = previous->nsTranslated->v[1];
 	room_switch->v[2] = previous->nsTranslated->v[2];
 }
+
 // get the robot's current position in the room
 int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	static int lastmove;
-	float d_theta;
 	int room_changed = 0;
 	// copy current stance into previous
 	copy_stance(current, previous);
@@ -241,12 +241,6 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	if( lastmove == ROTATE && m_t == FORWARD ) {
 		finish_turn(ri, previous->weTranslated);
 	}
-	
-	// Prevent NS Wrap Around  NO NORTHSTAR THETA FILTERING //
-	//printf("Theta_curr = %f\tTheta_prev = %f\t", current->ns->theta, previous->ns->theta);
-	d_theta = delta_theta(current->ns->theta, previous->ns->theta);
-	//printf("Delta theta NS = %f\n", d_theta);
-	current->ns_f->theta = d_theta + previous->ns_f->theta;
 	
 	// Transforms occur here
 	print_ns(current->ns_f);

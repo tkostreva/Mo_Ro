@@ -18,7 +18,7 @@
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{0.0, 100.0}}
+#define WAYPOINT_COORDS {{100.0, 0.0}}
 #define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 1.0
@@ -181,7 +181,6 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		y_i,
 		current_distance,
 		output,
-		sf,
 		theta_target,
 		distance_to_target,
 		tolerance;
@@ -208,8 +207,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	// point robot at destination using PID 
 	if( fabs(theta_target - current_location->v[2]) > 0.15) rotate_to_theta(ri, theta_target, current_location);	
 	  
-	sf = 0.1;
-	i = 0;
+	i = 10;
 	
 	do {
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
@@ -218,20 +216,28 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
 		//printf("Upper Lim = %f\tLower Lim = %f\n", upper_limit, lower_limit);
 		
+		/*
 		theta_target = (float)calcAngle((double)current_location->v[0], (double)current_location->v[1], (double)end_x, (double)end_y);
 		
+		// ROTATE DURING FORWARD RUN ? 
 		if(fabs(theta_target - current_location->v[2]) > 0.4) {
 			
 			rotate_to_theta(ri, theta_target, current_location);
 			
-			/* reset PID control for rest of move */
+			// reset PID control for rest of move
 			reset_PID(fwdPID);
 			sf = 0.1;
 			i = 0;
-		}
+		} */
 		
-		//move to reduce error at fill speed, then using PID in last 75 cm
-		if( distance_to_target <= 75 ) {
+		// For the first 10 iterations of action loop, pull out slowly so FIR filter isn't as delayed
+		if ( i > 0 ) {
+			bot_speed = i;  
+		}
+		else bot_speed = RI_FASTEST;
+		
+		// At the FWD PID Setpoint, turn on PID control to reduce speed and stop.
+		if( distance_to_target <= 40 ) {
 			  printf("\n *********************  FWD PID ENABLED  ********************\n\n");
 			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
 			  output = Compute(fwdPID, current_distance, setpoint );
@@ -244,9 +250,8 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			  else bot_speed = RI_SLOWEST;*/
 			  bot_speed = fwdSpeedScaling(output);
 		}
-		else bot_speed = RI_FASTEST;
 		
-		// move the bot based on bot_speed and define expected velocities for kalman filter
+		// move the bot based on bot_speed and define expected velocities for kalmann filter
 		if(bot_speed > 0) {
 			ri_move(ri, RI_MOVE_FORWARD, bot_speed);
 			expected_vel->v[0] = fwd_speed[bot_speed - 1] * cos(current_location->v[2]);
@@ -259,16 +264,13 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			expected_vel->v[1] = -1.0 * fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
 		}
 		
-		expected_vel->v[0] *= sf;
-		expected_vel->v[1] *= sf;
 		expected_vel->v[2] = 0.0;
 		
-		/* incriment scaling factor for expected velocites during wind up */
-		if (sf < 1.0) sf += 0.2;
-		i++;
+		/* incriment i for wind up */
+		i--;
 		
 		//refresh current position values and see if bot changed rooms.  If it does, reset scaling factor
-   		if( get_Position(ri, current_location, expected_vel, FORWARD) ) sf = 0.1;
+   		get_Position(ri, current_location, expected_vel, FORWARD);
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
  	} while(distance_to_target > tolerance ); // && (!ri_IR_Detected(ri)));
