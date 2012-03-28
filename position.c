@@ -43,34 +43,6 @@ void update_sensor_data( robot_if_t *ri ) {
         }
 }
 
-//flush the FIR filter
-void filter_flush(robot_if_t *ri) {
-	int i;
-	
-	for(i = 0; i < DEEP_TAPS - 1; i++) {
-		fir_Filter(f[0], (float)ri_getX(ri), DEEP_FILTER);
-		fir_Filter(f[1], (float)ri_getY(ri), DEEP_FILTER);
-		fir_Filter(f[2], ri_getTheta(ri), SHALLOW_FILTER);
-		fir_Filter(f[3], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_LEFT ), SHALLOW_FILTER);
-		fir_Filter(f[4], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_RIGHT ), SHALLOW_FILTER);
-		fir_Filter(f[5], (float)ri_getWheelEncoderTotals( ri, RI_WHEEL_REAR ), SHALLOW_FILTER);
-		fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
-	
-		update_sensor_data(ri);
-	}
-}
-//get fir filtered data 
-void get_filtered(robot_stance *s, robot_if_t *ri){
-	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x, DEEP_FILTER);
-	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y, DEEP_FILTER);
-	s->ns_f->theta		= fir_Filter(f[2], previous->ns_f->theta + delta_theta(current->ns->theta, previous->ns->theta), SHALLOW_FILTER);
-	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri), DEEP_FILTER);
-	s->ns_f->room		= s->ns->room;
-	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_tot, SHALLOW_FILTER);
-	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_tot, SHALLOW_FILTER);
-	s->we_f->back_tot	= s->we->back_tot; //((int)fir_Filter(f[5], (float)s->we->back_tot, SHALLOW_FILTER) + s->we->back_tot) / 2;
-}
-
 // use this to report ACTUAL difference between last theta and current theta ( prevent wrap around )
 float delta_theta(float current_theta, float previous_theta) {
 	float d_theta;
@@ -85,6 +57,34 @@ float delta_theta(float current_theta, float previous_theta) {
 	if(d_theta < -M_PI) d_theta = -2.0 * M_PI - d_theta; // theta wrapped from PI to -PI	
 		
 	return d_theta;	
+}
+
+//flush the FIR filter
+void filter_flush(robot_if_t *ri) {
+	int i;
+	
+	for(i = 0; i < TAPS - 1; i++) {
+		fir_Filter(f[0], (float)ri_getX(ri));
+		fir_Filter(f[1], (float)ri_getY(ri));
+		fir_Filter(f[2], ri_getTheta(ri));
+		fir_Filter(f[3], (float)ri_getWheelEncoder( ri, RI_WHEEL_LEFT ));
+		fir_Filter(f[4], (float)ri_getWheelEncoder( ri, RI_WHEEL_RIGHT ));
+		fir_Filter(f[5], (float)ri_getWheelEncoder( ri, RI_WHEEL_REAR ));
+		fir_Filter(f[6], ri_getNavStrengthRaw(ri));
+	
+		update_sensor_data(ri);
+	}
+}
+//get fir filtered data 
+void get_filtered(robot_stance *s, robot_if_t *ri){
+	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x);
+	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y);
+	s->ns_f->theta		= fir_Filter(f[2], previous->ns_f->theta + delta_theta(current->ns->theta, previous->ns->theta));
+	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri));
+	s->ns_f->room		= s->ns->room;
+	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_delta);
+	s->we_f->right_tot	= (int)fir_Filter(f[4], (float)s->we->right_delta);
+	s->we_f->back_tot	= (int)fir_Filter(f[5], (float)s->we->back_delta);
 }
 
 // Create a Robot Stance structure and allocate memory for pointers
@@ -195,6 +195,7 @@ void update_pos(robot_if_t *ri){
 	room_switch->v[1] = 0.0;
 	room_switch->v[2] = 0.0;
 }
+
 // when a room change occurs
 void room_change(robot_if_t *ri){
 	// flush fliters for new room
@@ -243,7 +244,11 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 	}
 	
 	// Transforms occur here
+	printf("\nPre-Xform Wheel Encoder and NS\n");
+	print_we(current->we);
 	print_ns(current->ns_f);
+	printf("\n");
+	
 	transform_NS(current->ns_f, current->nsTranslated);
 	if(m_t == ROTATE) get_turning_theta(current->we, current->weTranslated);
 	else transform_WE(current->we, current->weTranslated);

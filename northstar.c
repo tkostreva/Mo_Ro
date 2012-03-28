@@ -14,7 +14,7 @@ matrix *scale_matrix;
 float theta_cor[] = {
 	-0.25, /*ROOM TWO THETA COR*/
 	-1.556130, /*ROOM THREE THETA COR*/
-	 0.035983, /*ROOM FOUR THETA COR*/
+	-0.020485, /*ROOM FOUR THETA COR*/
 	-1.502438  /*ROOM FIVE THETA COR*/
 };
 
@@ -110,13 +110,17 @@ void transform_NS(ns_stance *s, vector *ns){
 	//scale
 	// Update Scaling Matrix based on current signal strength [NOT WORKING RIGHT]
 
-	if(s->sig > 0) {  // currently always skips dynamic scaling
-		scale_matrix->v[0][0] = 1/NS_TICKS_PER_CM;
-		scale_matrix->v[1][1] = 1/NS_TICKS_PER_CM;
+	if(s->sig > 15000) {
+		scale_matrix->v[0][0] = 1.0 / (NS_TICKS_PER_CM - 15);
+		scale_matrix->v[1][1] = scale_matrix->v[0][0];
 	}
-	else {  // currently keeping scaling factor at 45 per cm when signal strength is high and scaling down to 60 per cm when signal strength is low
-		  scale_matrix->v[0][0] = 1.0 / ( 0.001875 * s->sig + 16.0742 );
-		  scale_matrix->v[1][1] = 1.0 / ( -0.0048 * s->sig + 84.6228 );
+	else if(s->sig > 4000) {  
+		  scale_matrix->v[0][0] = 1.0 / ( ((-3.0 * s->sig) / 1100.0) + 86.0 );
+		  scale_matrix->v[1][1] = scale_matrix->v[0][0];
+	}
+	else {
+		scale_matrix->v[0][0] = 1.0 / (NS_TICKS_PER_CM + 15);
+		scale_matrix->v[1][1] = scale_matrix->v[0][0];
 	}
 	
 	MultMatVec(scale_matrix, &working_vector_2, ns);

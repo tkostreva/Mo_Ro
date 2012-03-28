@@ -18,7 +18,7 @@
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{100.0, 0.0}}
+#define WAYPOINT_COORDS {{65.0, 0.0}}
 #define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 1.0
@@ -35,6 +35,19 @@
 PID 	*fwdPID,
 	*rotPID;
 
+float fwd_speed[] = {  // Forward speeds in [cm/s]
+	33.94,
+	33.94,
+	32.5,
+	32.5,
+	31.6,
+	31.6,
+	22.2,
+	22.2,
+	20.2,
+	20.2
+};
+	
 float rot_speed[] = {  // Rotation Speeds in [rad/s]
 	3.0,
 	3.0,
@@ -48,56 +61,42 @@ float rot_speed[] = {  // Rotation Speeds in [rad/s]
 	1.06
 };
 
-float fwd_speed[] = {  // Forward speeds in [cm/s]
-	33.94,
-	33.94,
-	32.5,
-	32.5,
-	31.6,
-	31.6,
-	22.2,
-	22.2,
-	20.2,
-	20.2
-};
-
 /* FUNCTIONS */
 int fwdSpeedScaling(float PIDout) {
-	int 	temp,
-		speed;
+	float 	fwdScale;
+	int	speed;
 	
-	temp = (int) PIDout;
-	temp = abs(temp);
+	fwdScale = fabs(PIDout);
+		
+	if (fwdScale >= 80.0) speed = 1;
+	else if (fwdScale >= 60.0 && fwdScale < 80.0) speed = 3;
+	else if (fwdScale >= 40.0 && fwdScale < 60.0) speed = 5;
+	else if (fwdScale >= 20.0 && fwdScale < 40.0) speed = 7;
+	else if (fwdScale < 20.0) speed = 9;
 	
-	if (temp >= 80) speed = 1;
-	else if (temp >= 60 && temp < 80) speed = 3;
-	else if (temp >= 40 && temp < 60) speed = 5;
-	else if (temp >= 20 && temp < 40) speed = 7;
-	else if (temp < 20) speed = 9;
-	
-	if(PIDout < 0) speed *= -1;
+	if(PIDout < 0.0) speed *= -1;
 	
 	return speed;
 }
 
 int rotSpeedScaling(float PIDout) {
-	float 	temp;
+	float 	rotScale;
 	int	speed;
 	
-	temp = fabs(PIDout);
+	rotScale = fabs(PIDout);
 	
-	if (temp >= 10.0) speed = 4;
-	else if (temp >= 9.0 && temp < 10.0) speed = 4;
-	else if (temp >= 8.0 && temp < 9.0) speed = 5;
-	else if (temp >= 7.0 && temp < 8.0) speed = 5;
-	else if (temp >= 6.0 && temp < 7.0) speed = 6;
-	else if (temp >= 5.0 && temp < 6.0) speed = 6;
-	else if (temp >= 4.0 && temp < 5.0) speed = 6;
-	else if (temp >= 3.0 && temp < 4.0) speed = 6;
-	else if (temp >= 2.0 && temp < 3.0) speed = 6;
-	else if (temp < 2.0) speed = 6;
+	if (rotScale >= 10.0) speed = 4;
+	else if (rotScale >= 9.0 && rotScale < 10.0) speed = 4;
+	else if (rotScale >= 8.0 && rotScale < 9.0) speed = 5;
+	else if (rotScale >= 7.0 && rotScale < 8.0) speed = 5;
+	else if (rotScale >= 6.0 && rotScale < 7.0) speed = 6;
+	else if (rotScale >= 5.0 && rotScale < 6.0) speed = 6;
+	else if (rotScale >= 4.0 && rotScale < 5.0) speed = 6;
+	else if (rotScale >= 3.0 && rotScale < 4.0) speed = 6;
+	else if (rotScale >= 2.0 && rotScale < 3.0) speed = 6;
+	else if (rotScale < 2.0) speed = 6;
 	
-	if(PIDout < 0) speed *= -1;
+	if(PIDout < 0.0) speed *= -1;
 	
 	return speed;
 }
@@ -111,9 +110,9 @@ float get_euclidian_distance(float start_x, float start_y, float end_x, float en
 }
 
 
-double calcAngle(double p1_x, double p1_y, double p2_x, double p2_y) {
+float calcAngle(int p1_x, int p1_y, int p2_x, int p2_y) {
 	
-	return atan2( (p2_y - p1_y), (p2_x - p1_x) );
+	return atan2( (float)(p2_y - p1_y), (float)(p2_x - p1_x) );
 }
 
 void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
@@ -182,11 +181,11 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		current_distance,
 		output,
 		theta_target,
-		distance_to_target,
+		error,
 		tolerance;
 	int	i,
 		bot_speed;
-	tolerance = 20.0;//adjustable.  How close should I be to the waypoint before moving onto the next one?
+	tolerance = 10.0;//adjustable.  How close should I be to the waypoint before moving onto the next one?
 	vector 	*current_location,
 		*expected_vel;
 		
@@ -202,22 +201,22 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	y_i = current_location->v[1];
 	
 	// find initial theta to target in case we need to rotate immediately
-	theta_target = (float)calcAngle((double)x_i, (double)y_i, (double)end_x, (double)end_y);
+	theta_target = calcAngle(x_i, y_i, end_x, end_y);
 	
 	// point robot at destination using PID 
 	if( fabs(theta_target - current_location->v[2]) > 0.15) rotate_to_theta(ri, theta_target, current_location);	
 	  
 	i = 10;
+	// setpoint is the exact number of cm required to move to target.
+	setpoint = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
 	
 	do {
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
-		distance_to_target = get_euclidian_distance(current_location->v[0], current_location->v[1], end_x, end_y);
-		setpoint = current_distance + distance_to_target;
-		
-		//printf("Upper Lim = %f\tLower Lim = %f\n", upper_limit, lower_limit);
+		error = setpoint - current_distance;
+		//setpoint = current_distance + error;
 		
 		/*
-		theta_target = (float)calcAngle((double)current_location->v[0], (double)current_location->v[1], (double)end_x, (double)end_y);
+		theta_target = calcAngle(current_location->v[0], current_location->v[1], end_x, end_y);
 		
 		// ROTATE DURING FORWARD RUN ? 
 		if(fabs(theta_target - current_location->v[2]) > 0.4) {
@@ -230,50 +229,50 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 			i = 0;
 		} */
 		
-		// For the first 10 iterations of action loop, pull out slowly so FIR filter isn't as delayed
+		// For the first 10 iterations of action loop, pull out slowly 
 		if ( i > 0 ) {
 			bot_speed = i;  
 		}
 		else bot_speed = RI_FASTEST;
 		
 		// At the FWD PID Setpoint, turn on PID control to reduce speed and stop.
-		if( distance_to_target <= 40 ) {
-			  printf("\n *********************  FWD PID ENABLED  ********************\n\n");
-			  printf("CurrDist = %f\tDist to Target = %f\n", current_distance, distance_to_target);
+		if( error <= 40 ) {
 			  output = Compute(fwdPID, current_distance, setpoint );
+		  
+			  printf("\n *********************  FWD PID ENABLED  ********************\n\n");
+			  printf("CurrDist = %f\tError = %f\n", current_distance, error);			  
 			  printf("FWD PID Output = %f\n", output);
 			  
 			  // correlate output to a bot_speed NEGATIVE SPEEDS MOVE THE BOT BACKWARDS
-			  
-			  // shitty patch until we figure out correlation
-			  /*if(output < 0) bot_speed = -RI_SLOWEST;
-			  else bot_speed = RI_SLOWEST;*/
+			    
 			  bot_speed = fwdSpeedScaling(output);
 		}
 		
 		// move the bot based on bot_speed and define expected velocities for kalmann filter
 		if(bot_speed > 0) {
 			ri_move(ri, RI_MOVE_FORWARD, bot_speed);
-			expected_vel->v[0] = fwd_speed[bot_speed - 1] * cos(current_location->v[2]);
-			expected_vel->v[1] = fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
+			/* expected velocities now scaled in half to compensate for network lag */
+			expected_vel->v[0] = fwd_speed[bot_speed - 1] * cos(current_location->v[2]) * 0.5;
+			expected_vel->v[1] = fwd_speed[bot_speed - 1] * sin(current_location->v[2]) * 0.5;
 		}
 		else {
 			bot_speed *= -1;
 			ri_move(ri, RI_MOVE_BACKWARD, bot_speed);
-			expected_vel->v[0] = -1.0 * fwd_speed[bot_speed - 1] * cos(current_location->v[2]);
-			expected_vel->v[1] = -1.0 * fwd_speed[bot_speed - 1] * sin(current_location->v[2]);
+			/* expected velocities now scaled in half to compensate for network lag */
+			expected_vel->v[0] = -1.0 * fwd_speed[bot_speed - 1] * cos(current_location->v[2]) * 0.5;
+			expected_vel->v[1] = -1.0 * fwd_speed[bot_speed - 1] * sin(current_location->v[2]) * 0.5;
 		}
 		
 		expected_vel->v[2] = 0.0;
 		
-		/* incriment i for wind up */
+		/* decriment i for wind up */
 		i--;
 		
 		//refresh current position values and see if bot changed rooms.  If it does, reset scaling factor
    		get_Position(ri, current_location, expected_vel, FORWARD);
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
- 	} while(distance_to_target > tolerance ); // && (!ri_IR_Detected(ri)));
+ 	} while( error > tolerance );
  	
  	ri_move(ri, RI_STOP, 1);
 

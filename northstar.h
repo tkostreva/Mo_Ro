@@ -14,8 +14,7 @@
 #include <math.h>
 #include "matvec.h"
 
-#define NS_SCALING_FACTOR	90000.0
-#define NS_TICKS_PER_CM		55.0
+#define NS_TICKS_PER_CM		60.0
 
 // ns_stance structure contains x and y coordinates of NorthStar. Also it consists
 // of theta, signal strength, and room ID
