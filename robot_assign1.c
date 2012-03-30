@@ -18,7 +18,7 @@
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{65.0, 0.0}}
+#define WAYPOINT_COORDS {{0.0,-5.0}}
 #define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 1.0
@@ -35,7 +35,7 @@
 PID 	*fwdPID,
 	*rotPID;
 
-float fwd_speed[] = {  // Forward speeds in [cm/s]
+float fwd_speed[] = {  // Forward speeds in [cm/s]  (Halved in code to compensate for stop / lag in bot )
 	33.94,
 	33.94,
 	32.5,
@@ -89,8 +89,8 @@ int rotSpeedScaling(float PIDout) {
 	else if (rotScale >= 9.0 && rotScale < 10.0) speed = 4;
 	else if (rotScale >= 8.0 && rotScale < 9.0) speed = 5;
 	else if (rotScale >= 7.0 && rotScale < 8.0) speed = 5;
-	else if (rotScale >= 6.0 && rotScale < 7.0) speed = 6;
-	else if (rotScale >= 5.0 && rotScale < 6.0) speed = 6;
+	else if (rotScale >= 6.0 && rotScale < 7.0) speed = 5;
+	else if (rotScale >= 5.0 && rotScale < 6.0) speed = 5;
 	else if (rotScale >= 4.0 && rotScale < 5.0) speed = 6;
 	else if (rotScale >= 3.0 && rotScale < 4.0) speed = 6;
 	else if (rotScale >= 2.0 && rotScale < 3.0) speed = 6;
@@ -117,17 +117,14 @@ float calcAngle(int p1_x, int p1_y, int p2_x, int p2_y) {
 
 void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
 	float	output,
-		rot_amount,
-		sf;		/* scaling factor for windup */
-	int  	ang_vel;
+		rot_amount;
+	int  	ang_vel;		
 	vector *expected_vel;
 	
 	/* reset PID control for this rotation */
 	reset_PID(rotPID);
 	
 	expected_vel = (vector *)calloc(1, sizeof(vector));
-	
-	sf = 0.0;
 	
 	do {
 		printf("\n *********************  ROT PID ENABLED  ********************\n\n");
@@ -137,39 +134,39 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 		
 		// correlate output to an angular velocity
 		ang_vel = rotSpeedScaling(output);
-				 
+		
 		if(ang_vel > 0) {
-			ri_move(ri, RI_TURN_LEFT, ang_vel);
+			if(ang_vel < 6) ri_move(ri, RI_TURN_LEFT_20DEG, ang_vel);
+			else ri_move(ri, RI_TURN_LEFT, ang_vel);
+			
 			if(fabs(output) < 2.0) ri_move(ri, RI_STOP, ang_vel);
 						
 			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
-			expected_vel->v[2] = rot_speed[ang_vel - 1];
+			expected_vel->v[2] = rot_speed[ang_vel - 1] * 0.75;
 		 }
 		else {
 			ang_vel *= -1;
-			ri_move(ri, RI_TURN_RIGHT, ang_vel);
+			
+			if(ang_vel < 6) ri_move(ri, RI_TURN_RIGHT_20DEG, ang_vel);
+			else ri_move(ri, RI_TURN_RIGHT, ang_vel);
+			
 			if(fabs(output) < 2.0) ri_move(ri, RI_STOP, ang_vel);
 						
 			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
 			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
-			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1];
+			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1] * 0.75;
 		}
 		
-		/* factor in windup time with scaling factor */
-		expected_vel->v[0] *= sf;
-		expected_vel->v[1] *= sf;
-		expected_vel->v[2] *= sf;
-		
-		/* increment scaling factor */
-		if(sf < 1.0) sf += 0.25;
-		 
+				 
 		get_Position(ri, current_location, expected_vel, ROTATE);
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n\n", current_location->v[0], current_location->v[1], current_location->v[2]);
 		
-		rot_amount = fabs(target_theta - current_location->v[2]);
-	} while (rot_amount > 0.075);
+		rot_amount = fabs(target_theta - current_location->v[2]);		
+	} while (rot_amount > 0.15);
+	
+	ri_move(ri, RI_STOP, 1);
 	
 	free(expected_vel);
 }
@@ -272,12 +269,12 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
    		get_Position(ri, current_location, expected_vel, FORWARD);
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
- 	} while( error > tolerance );
- 	
- 	ri_move(ri, RI_STOP, 1);
+	} while( error > tolerance );
+	
+	ri_move(ri, RI_STOP, 1);
 
- 	//point robot to end theta using PID //code me
- 	free(current_location);
+	//point robot to end theta using PID //code me
+	free(current_location);
 	free(expected_vel);
 }
 
@@ -287,7 +284,7 @@ void battery_check( robot_if_t *ri ) {
 	if( ri_getBattery(ri) < RI_ROBOT_BATTERY_HOME ) {
 		printf("Charge me please!!!");
 		exit(11);
-	}	
+	}
 }
 
 /* MAIN */

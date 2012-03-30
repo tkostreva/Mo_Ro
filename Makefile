@@ -16,22 +16,22 @@ theta_cal.o: theta_cal.c position.o matvec.o rovioKalmanFilter.o
 robot_assign1.o: robot_assign1.c position.o matvec.o
 	gcc ${CFLAGS} -c robot_assign1.c -lrt
 
-position.o: position.c northstar.o wheel_encoder.o matvec.o rovioKalmanFilter.o
+position.o: position.c northstar.o wheel_encoder.o matvec.o rovioKalmanFilter.o position.h kalmanFilterDef.h
 	gcc ${CFLAGS} -c position.c
 
-northstar.o: northstar.c matvec.o
+northstar.o: northstar.c matvec.o northstar.h
 	gcc ${CFLAGS} -c northstar.c
 
-wheel_encoder.o: wheel_encoder.c matvec.o
+wheel_encoder.o: wheel_encoder.c matvec.o wheel_encoder.h
 	gcc ${CFLAGS} -c wheel_encoder.c
 
-filter.o: filter.c
+filter.o: filter.c filter.h
 	gcc ${CFLAGS} -c filter.c
 
-PID_Control.o: PID_Control.c
+PID_Control.o: PID_Control.c PID_Control.h
 	gcc ${CFLAGS} -c PID_Control.c
 
-matvec.o: matvec.c
+matvec.o: matvec.c matvec.h
 	gcc ${CFLAGS} -c matvec.c
 
 rovioKalmanFilter.o: rovioKalmanFilter.c

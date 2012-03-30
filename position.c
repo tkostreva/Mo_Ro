@@ -49,13 +49,15 @@ float delta_theta(float current_theta, float previous_theta) {
 	
 	// find delta theta and get it's absolute value
 	d_theta = current_theta - previous_theta;
-	//if(d_theta < 0.0) d_theta *= -1.0;
 	
-	// check to see if reported theta wrapped around
-	if(d_theta > M_PI) d_theta = 2.0 * M_PI - d_theta; // theta wrapped from -PI to PI
-		
-	if(d_theta < -M_PI) d_theta = -2.0 * M_PI - d_theta; // theta wrapped from PI to -PI	
-		
+	// If theta wrapped from -pi to pi (turning right), subtract 2 pi
+	if(d_theta > M_PI) d_theta -= (2.0 * M_PI);
+	
+	// If theta wrapped from pi to -pi (turning left), add 2 pi
+	if(d_theta < -M_PI) d_theta += (2.0 * M_PI);
+	
+	printf("Delta NS Theta = %f\n", d_theta);
+	
 	return d_theta;	
 }
 
@@ -79,7 +81,7 @@ void filter_flush(robot_if_t *ri) {
 void get_filtered(robot_stance *s, robot_if_t *ri){
 	s->ns_f->x		= (int)fir_Filter(f[0], (float)s->ns->x);
 	s->ns_f->y		= (int)fir_Filter(f[1], (float)s->ns->y);
-	s->ns_f->theta		= fir_Filter(f[2], previous->ns_f->theta + delta_theta(current->ns->theta, previous->ns->theta));
+	s->ns_f->theta		= previous->ns_f->theta + delta_theta(current->ns->theta, previous->ns->theta);
 	s->ns_f->sig		= (int)fir_Filter(f[6], ri_getNavStrengthRaw(ri));
 	s->ns_f->room		= s->ns->room;
 	s->we_f->left_tot	= (int)fir_Filter(f[3], (float)s->we->left_delta);
@@ -243,11 +245,13 @@ int get_Position(robot_if_t *ri, vector *loc, vector *vel, int m_t){
 		finish_turn(ri, previous->weTranslated);
 	}
 	
-	// Transforms occur here
+	/* Transforms occur here */
 	printf("\nPre-Xform Wheel Encoder and NS\n");
 	print_we(current->we);
+	//print_ns(current->ns);
 	print_ns(current->ns_f);
 	printf("\n");
+	
 	
 	transform_NS(current->ns_f, current->nsTranslated);
 	if(m_t == ROTATE) get_turning_theta(current->we, current->weTranslated);
