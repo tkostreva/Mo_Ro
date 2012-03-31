@@ -82,17 +82,11 @@ float get_we_Y(we_stance *s) {
 
 // Using difference between front wheel encoders to track the deviation from straight-ish theta for use in "go to" portion
 float get_we_Theta(we_stance *s) {
-	float 	d_we,	// delta between front wheel encoders 
-		theta;	
+	float 	theta;	
 	
-	// get transformed difference between front wheel encoders to see difference in CM 
-	// using deltas since we have a running total in tranform_WE() 
-	d_we = ((float)s->left_delta - (float)s->right_delta) / WE_TICKS_PER_CM;
-	// get angle bot has changed by inv tan of d_we / DIST BETWEEN FRONT WHEELS [measured at 23.4 cm]
-	theta = atan( d_we / 23.4 );
-  
-	//return theta;
-	return 0.0;
+	theta = ( (float)s->back_tot / ROTATION_SCALING ) / 14.5;
+	
+	return theta * -1.0;
 }
 
 // return a transformed WE vector for use in the Kalman filter 

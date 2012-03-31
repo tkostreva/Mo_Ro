@@ -20,11 +20,11 @@
 
 #define WHEELENC_UNCERTAINTY_X  .20 // this is the uncertainty of the wheel encoder readings, 
 #define WHEELENC_UNCERTAINTY_Y  .20 // 
-#define WHEELENC_UNCERTAINTY_TH .99
+#define WHEELENC_UNCERTAINTY_TH .40
 
 #define PROCESS_UNCERTAINTY_X  .20 // this is the uncertainty about whether the robot will obey the model
 #define PROCESS_UNCERTAINTY_Y  .20
-#define PROCESS_UNCERTAINTY_TH .15
+#define PROCESS_UNCERTAINTY_TH .25
 
 // the following structure defines the important matrices and constants that make up the filter
 typedef struct{

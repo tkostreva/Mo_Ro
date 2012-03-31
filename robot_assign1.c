@@ -18,7 +18,7 @@
 //#define WAYPOINT_COORDS {{342.9, 0.0},{243.84, 182.88},{297.18, 182.88},{406.400, 302.26},{060.96, 403.86},{0,0}}
 //#define NUMBER_OF_WAYPOINTS 6 /*6 {342.9, 0.0}*/
 //#define WAYPOINT_COORDS {{150.0,0.0},{150.0,0.0}}
-#define WAYPOINT_COORDS {{0.0,-5.0}}
+#define WAYPOINT_COORDS {{300.0,0.0}}
 #define NUMBER_OF_WAYPOINTS 1
 
 #define F_Kp 1.0
@@ -29,7 +29,7 @@
 #define R_Ki 0.5
 #define R_Kd 0.20
 
-#define NS_RADIUS  9.5   /* radius from center of bot to NS sensor */
+#define FWD_PID_TOLERANCE  10.0  /*How close should I be to the waypoint before moving onto the next one? */
 
 /* GLOBALS */
 PID 	*fwdPID,
@@ -115,16 +115,25 @@ float calcAngle(int p1_x, int p1_y, int p2_x, int p2_y) {
 	return atan2( (float)(p2_y - p1_y), (float)(p2_x - p1_x) );
 }
 
-void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_location){
+void rotate_to_theta(robot_if_t *ri, float target_theta){
 	float	output,
 		rot_amount;
 	int  	ang_vel;		
-	vector *expected_vel;
+	vector  *current_location,
+		*expected_vel;
 	
 	/* reset PID control for this rotation */
 	reset_PID(rotPID);
 	
+	current_location = (vector *)calloc(1, sizeof(vector));
 	expected_vel = (vector *)calloc(1, sizeof(vector));
+	
+	/* initialize expected velocity vector */
+	expected_vel->v[0] = 0.0;
+	expected_vel->v[1] = 0.0;
+	expected_vel->v[2] = 0.0;
+	
+	get_Position(ri, current_location, expected_vel, ROTATE);
 	
 	do {
 		printf("\n *********************  ROT PID ENABLED  ********************\n\n");
@@ -141,8 +150,8 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 			
 			if(fabs(output) < 2.0) ri_move(ri, RI_STOP, ang_vel);
 						
-			expected_vel->v[0] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
-			expected_vel->v[1] = 0.0;//NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
+			expected_vel->v[0] = 0.0;
+			expected_vel->v[1] = 0.0;
 			expected_vel->v[2] = rot_speed[ang_vel - 1] * 0.75;
 		 }
 		else {
@@ -153,8 +162,8 @@ void rotate_to_theta(robot_if_t *ri, float target_theta, vector *current_locatio
 			
 			if(fabs(output) < 2.0) ri_move(ri, RI_STOP, ang_vel);
 						
-			expected_vel->v[0] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * sin(current_location->v[2]);
-			expected_vel->v[1] = 0.0;//-1 * NS_RADIUS * rot_speed[ang_vel - 1] * cos(current_location->v[2]);
+			expected_vel->v[0] = 0.0;
+			expected_vel->v[1] = 0.0;
 			expected_vel->v[2] = -1.0 * rot_speed[ang_vel - 1] * 0.75;
 		}
 		
@@ -178,11 +187,10 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		current_distance,
 		output,
 		theta_target,
-		error,
-		tolerance;
+		theta_error,
+		error;
 	int	i,
 		bot_speed;
-	tolerance = 10.0;//adjustable.  How close should I be to the waypoint before moving onto the next one?
 	vector 	*current_location,
 		*expected_vel;
 		
@@ -201,7 +209,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	theta_target = calcAngle(x_i, y_i, end_x, end_y);
 	
 	// point robot at destination using PID 
-	if( fabs(theta_target - current_location->v[2]) > 0.15) rotate_to_theta(ri, theta_target, current_location);	
+	if( fabs(theta_target - current_location->v[2]) > 0.15) rotate_to_theta(ri, theta_target);	
 	  
 	i = 10;
 	// setpoint is the exact number of cm required to move to target.
@@ -210,21 +218,8 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 	do {
 		current_distance = get_euclidian_distance(x_i, y_i, current_location->v[0], current_location->v[1]);
 		error = setpoint - current_distance;
-		//setpoint = current_distance + error;
 		
-		/*
-		theta_target = calcAngle(current_location->v[0], current_location->v[1], end_x, end_y);
-		
-		// ROTATE DURING FORWARD RUN ? 
-		if(fabs(theta_target - current_location->v[2]) > 0.4) {
-			
-			rotate_to_theta(ri, theta_target, current_location);
-			
-			// reset PID control for rest of move
-			reset_PID(fwdPID);
-			sf = 0.1;
-			i = 0;
-		} */
+		theta_error = theta_target - current_location->v[2];
 		
 		// For the first 10 iterations of action loop, pull out slowly 
 		if ( i > 0 ) {
@@ -247,7 +242,10 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
 		
 		// move the bot based on bot_speed and define expected velocities for kalmann filter
 		if(bot_speed > 0) {
-			ri_move(ri, RI_MOVE_FORWARD, bot_speed);
+			if 	( theta_error > 0.175 )	ri_move(ri, RI_MOVE_FWD_LEFT, bot_speed);
+			else if ( theta_error < -0.175 )	ri_move(ri, RI_MOVE_FWD_RIGHT, bot_speed);
+			else 				ri_move(ri, RI_MOVE_FORWARD, bot_speed);
+			
 			/* expected velocities now scaled in half to compensate for network lag */
 			expected_vel->v[0] = fwd_speed[bot_speed - 1] * cos(current_location->v[2]) * 0.5;
 			expected_vel->v[1] = fwd_speed[bot_speed - 1] * sin(current_location->v[2]) * 0.5;
@@ -269,7 +267,7 @@ void go_to_position(robot_if_t *ri, float end_x, float end_y){
    		get_Position(ri, current_location, expected_vel, FORWARD);
 		
 		printf("Kalmann filtered result = %f\t%f\t%f\n", current_location->v[0], current_location->v[1], current_location->v[2]);		
-	} while( error > tolerance );
+	} while( error > FWD_PID_TOLERANCE );
 	
 	ri_move(ri, RI_STOP, 1);
 
